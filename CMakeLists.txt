@@ -1,22 +1,21 @@
 cmake_minimum_required(VERSION 3.15)
 project(diptool)
 
-# compiler standard and other settings
+## compiler standard and other settings
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_C_STANDARD 11)
 
-# command scripts to build the libraries before compiling project
+## command scripts to build the libraries before compiling project
 
+# will rebuild the libraries
 set(CLEAR_LIBS "")
 if (${CLEAR_SFML_LIBS})
 	set(CLEAR_LIBS "clear")
 endif()
 
-message(${WIN32})
-
 if (DEFINED WIN32 AND (DEFINED MSYS OR DEFINED MINGW))
-message("Using MSYS")
+message("Using MSYS or MinGW")
 
 execute_process(
                 WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
@@ -48,7 +47,7 @@ return(-1)
 
 endif()
 
-# location of libraries
+## location of libraries
 
 set(SFML_STATIC_LIBRARIES TRUE)
 
@@ -77,7 +76,7 @@ find_package(ImGui-SFML REQUIRED)
 add_subdirectory(libs/cli11)
 add_subdirectory(libs/spdlog)
 
-# files needed to build project
+## files needed to build project
 
 add_executable(diptool
                main.cpp
@@ -92,5 +91,11 @@ target_link_libraries(diptool
                       spdlog
                      )
 
+## copy files after build to the directory of the output (if needed)
 
+if (DEFINED WIN32 AND (DEFINED MSYS OR DEFINED MINGW))
 
+add_custom_command(TARGET diptool POST_BUILD
+                   COMMAND ${CMAKE_COMMAND} -E copy $ENV{MINGW_PREFIX}/bin/libgcc_s_seh-1.dll $ENV{MINGW_PREFIX}/bin/libwinpthread-1.dll $ENV{MINGW_PREFIX}/bin/libstdc++-6.dll .
+                   WORKING_DIRECTORY ${CMAKE_BINARY_DIR} )
+endif()
