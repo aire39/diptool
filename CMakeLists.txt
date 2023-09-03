@@ -1,6 +1,14 @@
 cmake_minimum_required(VERSION 3.15)
 project(diptool)
 
+## check if debug or release
+
+if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+	set(use_build_type "debug")
+else ()
+	set(use_build_type "release")
+endif ()
+
 ## compiler standard and other settings
 
 set(CMAKE_CXX_STANDARD 20)
@@ -53,13 +61,13 @@ set(SFML_STATIC_LIBRARIES TRUE)
 
 if (DEFINED WIN32 AND (DEFINED MSYS OR DEFINED MINGW))
 
-set(SFML_DIR "${PROJECT_SOURCE_DIR}/libs/sfml/sfml-release/lib/cmake/SFML")
-set(ImGui-SFML_DIR "${PROJECT_SOURCE_DIR}/libs/imgui-sfml/imgui-sfml-release/lib/cmake/ImGui-SFML")
+set(SFML_DIR "${PROJECT_SOURCE_DIR}/libs/sfml/sfml-${use_build_type}/lib/cmake/SFML")
+set(ImGui-SFML_DIR "${PROJECT_SOURCE_DIR}/libs/imgui-sfml/imgui-sfml-${use_build_type}/lib/cmake/ImGui-SFML")
 
 elseif(DEFINED WIN32 AND DEFINED MSVC)
 
-set(SFML_DIR "${PROJECT_SOURCE_DIR}/libs/sfml/sfml-vs-release/lib/cmake/SFML")
-set(ImGui-SFML_DIR "${PROJECT_SOURCE_DIR}/libs/imgui-sfml/imgui-sfml-vs-release/lib/cmake/ImGui-SFML")
+set(SFML_DIR "${PROJECT_SOURCE_DIR}/libs/sfml/sfml-vs-${use_build_type}/lib/cmake/SFML")
+set(ImGui-SFML_DIR "${PROJECT_SOURCE_DIR}/libs/imgui-sfml/imgui-sfml-vs-${use_build_type}/lib/cmake/ImGui-SFML")
 
 else()
 
