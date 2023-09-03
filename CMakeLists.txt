@@ -88,6 +88,8 @@ add_subdirectory(libs/spdlog)
 
 add_executable(diptool
                main.cpp
+               CheckerBoardImage.cpp
+               CheckerBoardImage.h
               )
 
 target_link_libraries(diptool
