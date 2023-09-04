@@ -22,6 +22,19 @@ if (${CLEAR_SFML_LIBS})
 	set(CLEAR_LIBS "clear")
 endif()
 
+if (DEFINED WIN32)
+        find_program(FOUND_GIT "git")
+
+        if (FOUND_GIT)
+        execute_process(
+                        WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/libs/sfml"
+                        COMMAND git apply ${PROJECT_SOURCE_DIR}/libs/patches/sfml/onresize_win32_2.6.0.patch
+                       )
+        else()
+        message("Unable to find git command! Will not try to apply patches.")
+        endif()
+endif()
+
 if (DEFINED WIN32 AND (DEFINED MSYS OR DEFINED MINGW))
 message("Using MSYS or MinGW")
 
