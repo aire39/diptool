@@ -2,7 +2,7 @@
 #include <cmath>
 
 CheckerBoardImage::CheckerBoardImage()
-  : CheckerBoardImage(800, 600, 20)
+  : CheckerBoardImage(800, 600, 32)
 {
 }
 
@@ -23,8 +23,8 @@ void CheckerBoardImage::Generate(uint32_t pixel_width, uint32_t pixel_height, ui
   uint8_t * set_color = color_1;
   uint8_t * color_reset = color_1;
 
-  const uint32_t mod_value_x = std::ceil(pixel_width / repeat_checkers_per_line);
-  const uint32_t mod_value_y = std::ceil(pixel_height / repeat_checkers_per_line);
+  const uint32_t mod_value_x = repeat_checkers_per_line;
+  const uint32_t mod_value_y = repeat_checkers_per_line;
 
   for (uint32_t i=0; i<pixel_height; i++)
   {

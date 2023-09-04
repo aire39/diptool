@@ -18,7 +18,7 @@ class CheckerBoardImage
     uint32_t pixelWidth = 800;
     uint32_t pixelHeight = 600;
     static constexpr uint32_t bytesPerPixel = 4;
-    static constexpr uint32_t defaultCheckerTileRepeat = 20;
+    static constexpr uint32_t defaultCheckerTileRepeat = 32;
 
     void SetPixelColor(uint32_t x, uint32_t y, const uint8_t rgb[3]);
 };

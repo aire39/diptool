@@ -1,4 +1,5 @@
 #include <string_view>
+#include <thread>
 
 #include "imgui.h"
 #include "imgui-SFML.h"
@@ -13,6 +14,24 @@
 
 #include "CheckerBoardImage.h"
 
+#define USE_ONRESIZING true
+
+void RenderTask(sf::RenderWindow & window
+               ,std::string & image_file_path
+               ,sf::RectangleShape & bg_image_plane
+               ,sf::Image & loaded_image
+               ,sf::Sprite & loaded_image_plane
+               ,bool & app_is_running
+               );
+
+void onResizing(const sf::Event& event
+               ,sf::RenderWindow & window
+               ,sf::RectangleShape & bg_image_plane
+               ,CheckerBoardImage& checker_image
+               ,sf::Image& image
+               ,sf::Texture& tex
+               );
+
 int main(int argc, char*argv[])
 {
   constexpr std::string_view window_name = "DipTool";
@@ -26,7 +45,7 @@ int main(int argc, char*argv[])
   uint32_t window_height = 600;
   app.add_option("--ih", window_height, "set window height");
 
-  uint32_t bg_repeat_tiles = 20;
+  uint32_t bg_repeat_tiles = 32;
   app.add_option("--tr", bg_repeat_tiles, "set background checker tile repeat");
 
   std::string image_file_path;
@@ -68,7 +87,8 @@ int main(int argc, char*argv[])
   // setup sfml window
   spdlog::info("initializing window...");
 
-  sf::RenderWindow window(sf::VideoMode({window_width, window_height}), window_name.data());
+  sf::RenderWindow window(sf::VideoMode({window_width, window_height})
+                         ,window_name.data());
 
   // setup sprite
   sf::Image bg_image;
@@ -104,7 +124,30 @@ int main(int argc, char*argv[])
   // application loop
   spdlog::info("starting application loop...");
 
-  sf::Clock delta_clock;
+  bool app_is_running = true;
+  std::thread render_thread(&RenderTask
+                           ,std::ref(window)
+                           ,std::ref(image_file_path)
+                           ,std::ref(bg_image_plane)
+                           ,std::ref(loaded_image)
+                           ,std::ref(loaded_image_plane)
+                           ,std::ref(app_is_running)
+                           );
+
+  window.setActive(false);
+
+  #ifdef USE_SFML_ONRESIZING_EVENT
+  #if USE_ONRESIZING
+  bool is_onsize_set = window.setOnSize([&](const sf::Event& event) {
+    onResizing(event, window, bg_image_plane, checker_image, bg_image, bg_texture);
+  });
+
+  if (is_onsize_set)
+  {
+    spdlog::info("custom window onsize callback set!");
+  }
+  #endif
+  #endif
 
   while (window.isOpen())
   {
@@ -114,10 +157,47 @@ int main(int argc, char*argv[])
 
       if (event.type == sf::Event::Closed)
       {
+        // wait for thread to join since window.close() (sf::Window::close()) destroys the opengl context
+        // leading to an annoying warning/error as the application closes
+        app_is_running = false;
+        if (render_thread.joinable())
+        {
+          render_thread.join();
+        }
+
+        window.setActive();
         window.close();
       }
-    }
 
+      // catch the resize events
+      if (event.type == sf::Event::Resized)
+      {
+        // update the view to the new size of the window
+        onResizing(event, window, bg_image_plane, checker_image, bg_image, bg_texture);
+      }
+    }
+  }
+
+  ImGui::SFML::Shutdown();
+
+  spdlog::info("application done!");
+
+  return 0;
+}
+
+void RenderTask(sf::RenderWindow & window
+               ,std::string & image_file_path
+               ,sf::RectangleShape & bg_image_plane
+               ,sf::Image & loaded_image
+               ,sf::Sprite & loaded_image_plane
+               ,bool & app_is_running
+               )
+{
+  window.setActive();
+  sf::Clock delta_clock;
+
+  while(app_is_running)
+  {
     ImGui::SFML::Update(window, delta_clock.restart());
 
     if (image_file_path.empty())
@@ -145,9 +225,32 @@ int main(int argc, char*argv[])
     window.display();
   }
 
-  ImGui::SFML::Shutdown();
+  window.setActive(false);
+}
 
-  spdlog::info("application done!");
+void onResizing(const sf::Event& event
+               ,sf::RenderWindow & window
+               ,sf::RectangleShape & bg_image_plane
+               ,CheckerBoardImage& checker_image
+               ,sf::Image& image
+               ,sf::Texture& tex
+               )
+{
+  sf::FloatRect visibleArea(0.0f
+      ,0.0f
+      ,static_cast<float>(event.size.width)
+      ,static_cast<float>(event.size.height)
+  );
 
-  return 0;
+  window.setView(sf::View(visibleArea));
+
+  checker_image.Generate(event.size.width, event.size.height, 32);
+  image.create(event.size.width, event.size.height, checker_image.GetImage().data());
+  tex.loadFromImage(image);
+
+  bg_image_plane.setSize(sf::Vector2f(static_cast<float>(event.size.width)
+      ,static_cast<float>(event.size.height)
+  ));
+
+  window.setSize(sf::Vector2u(event.size.width, event.size.height));
 }
