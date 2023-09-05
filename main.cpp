@@ -1,20 +1,20 @@
 #include <string_view>
 #include <thread>
 
-#include "imgui.h"
-#include "imgui-SFML.h"
+#include <imgui.h>
+#include <imgui-SFML.h>
 
 #include <SFML/Window.hpp>
 #include <SFML/Graphics.hpp>
 #include <SFML/OpenGL.hpp>
 
 #include <spdlog/spdlog.h>
-
 #include <CLI/CLI.hpp>
+#include <tinyfiledialogs/tinyfiledialogs.h>
 
 #include "CheckerBoardImage.h"
 
-#define USE_ONRESIZING true
+#define USE_ON_RESIZING true
 
 void RenderTask(sf::RenderWindow & window
                ,std::string & image_file_path
@@ -56,7 +56,7 @@ int main(int argc, char*argv[])
   // setup logger
   spdlog::enable_backtrace(32);
 
-  // load image file and checker board if image is not found
+  // load image file and checkerboard if image is not found
   CheckerBoardImage checker_image(window_width, window_height, bg_repeat_tiles);
   sf::Image loaded_image;
 
@@ -137,14 +137,14 @@ int main(int argc, char*argv[])
   window.setActive(false);
 
   #ifdef USE_SFML_ONRESIZING_EVENT
-  #if USE_ONRESIZING
-  bool is_onsize_set = window.setOnSize([&](const sf::Event& event) {
+  #if USE_ON_RESIZING
+  bool is_on_size_set = window.setOnSize([&](const sf::Event& event) {
     onResizing(event, window, bg_image_plane, checker_image, bg_image, bg_texture);
   });
 
-  if (is_onsize_set)
+  if (is_on_size_set)
   {
-    spdlog::info("custom window onsize callback set!");
+    spdlog::info("custom window on resize (setOnSize) callback set!");
   }
   #endif
   #endif
@@ -209,7 +209,20 @@ void RenderTask(sf::RenderWindow & window
       ImGui::Begin(image_file_path.c_str());
     }
 
-    ImGui::Button("Load Image");
+    if(ImGui::Button("Load Image"))
+    {
+      char const * file_filter[2]={"*.png","*.jpg"};
+      auto selected_file = tinyfd_openFileDialog("Load Image"
+                                                       ,nullptr
+                                                       ,2
+                                                       ,file_filter
+                                                       ,"image files"
+                                                       ,0
+                                                       );
+
+      image_file_path = std::string(selected_file);
+    }
+
     ImGui::End();
 
     window.clear(sf::Color::Black);
@@ -237,10 +250,10 @@ void onResizing(const sf::Event& event
                )
 {
   sf::FloatRect visibleArea(0.0f
-      ,0.0f
-      ,static_cast<float>(event.size.width)
-      ,static_cast<float>(event.size.height)
-  );
+                           ,0.0f
+                           ,static_cast<float>(event.size.width)
+                           ,static_cast<float>(event.size.height)
+                           );
 
   window.setView(sf::View(visibleArea));
 
