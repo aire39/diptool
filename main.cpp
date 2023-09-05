@@ -207,9 +207,6 @@ void RenderTask(sf::RenderWindow & window
 
     ImGui::Begin("Menu", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 
-    ImGui::Text(image_file_path.c_str());
-    ImGui::SameLine();
-
     if(ImGui::Button("Load Image"))
     {
       char const * file_filter[2]={"*.png","*.jpg"};
@@ -235,6 +232,18 @@ void RenderTask(sf::RenderWindow & window
         spdlog::warn("Unable to load image");
       }
     }
+
+    ImGui::SameLine();
+    ImGui::Text(image_file_path.c_str());
+
+    ImGui::NewLine();
+
+    ImGui::Text("operations:");
+
+    static int current_item = 0;
+    const char * items_list[] = {"None", "Downsample"};
+
+    ImGui::Combo("##operations", &current_item, items_list, 2);
 
     ImGui::End();
 
