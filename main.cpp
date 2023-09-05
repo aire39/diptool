@@ -199,6 +199,9 @@ void RenderTask(sf::RenderWindow & window
   window.setActive();
   sf::Clock delta_clock;
 
+  int ds_op = -1;
+  int current_item = 0;
+
   while(app_is_running)
   {
     ImGui::SFML::Update(window, delta_clock.restart());
@@ -240,10 +243,67 @@ void RenderTask(sf::RenderWindow & window
 
     ImGui::Text("operations:");
 
-    static int current_item = 0;
     const char * items_list[] = {"None", "Downsample"};
 
     ImGui::Combo("##operations", &current_item, items_list, 2);
+
+    if (current_item == 1)
+    {
+      ImGui::Begin("Downsample Operation", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+
+      ImGui::BeginGroup();
+
+      if (ImGui::RadioButton("Nearest", (ds_op == 0)))
+      {
+        ds_op = 0;
+      }
+
+      ImGui::SameLine();
+
+      if(ImGui::RadioButton("Bilinear", (ds_op == 1)))
+      {
+        ds_op = 1;
+      }
+
+      auto ButtonCenteredOnLine = [](const char* label, float alignment = 0.5f) -> bool
+      {
+        ImGuiStyle& style = ImGui::GetStyle();
+
+        float size = ImGui::CalcTextSize(label).x + style.FramePadding.x * 2.0f;
+        float avail = ImGui::GetContentRegionAvail().x;
+
+        float off = (avail - size) * alignment;
+        if (off > 0.0f)
+          ImGui::SetCursorPosX(ImGui::GetCursorPosX() + off);
+
+        return ImGui::Button(label);
+      };
+
+      if (ButtonCenteredOnLine("process image"))
+      {
+        if (ds_op == 0)
+        {
+          spdlog::info("processing image as nearest");
+          //TODO: do nearest neighbor downsampling
+        }
+        else if (ds_op == 1)
+        {
+          spdlog::info("processing image as bilinear");
+        }
+        else
+        {
+          spdlog::warn("No operation selected");
+          //TODO: do bilinear downsampling
+        }
+      }
+
+      ImGui::End();
+
+    }
+    else
+    {
+
+    }
 
     ImGui::End();
 
