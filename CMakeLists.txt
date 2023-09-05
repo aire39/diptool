@@ -97,12 +97,16 @@ find_package(ImGui-SFML REQUIRED)
 add_subdirectory(libs/cli11)
 add_subdirectory(libs/spdlog)
 
+include_directories(${PROJECT_SOURCE_DIR}/libs)
+file(GLOB TINYDIALOG ${PROJECT_SOURCE_DIR}/libs/tinyfiledialogs/tinyfiledialogs.c ${PROJECT_SOURCE_DIR}/libs/tinyfiledialogs/tinyfiledialogs.h)
+
 ## files needed to build project
 
 add_executable(diptool
                main.cpp
                CheckerBoardImage.cpp
                CheckerBoardImage.h
+               ${TINYDIALOG}
               )
 
 target_link_libraries(diptool

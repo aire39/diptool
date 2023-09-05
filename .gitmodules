@@ -13,3 +13,6 @@
 [submodule "libs/spdlog"]
 	path = libs/spdlog
 	url = https://github.com/gabime/spdlog.git
+[submodule "libs/tinyfiledialogs"]
+	path = libs/tinyfiledialogs
+	url = https://git.code.sf.net/p/tinyfiledialogs/code
