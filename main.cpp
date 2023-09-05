@@ -20,6 +20,7 @@ void RenderTask(sf::RenderWindow & window
                ,std::string & image_file_path
                ,sf::RectangleShape & bg_image_plane
                ,sf::Image & loaded_image
+               ,sf::Texture & loaded_texture
                ,sf::Sprite & loaded_image_plane
                ,bool & app_is_running
                );
@@ -130,6 +131,7 @@ int main(int argc, char*argv[])
                            ,std::ref(image_file_path)
                            ,std::ref(bg_image_plane)
                            ,std::ref(loaded_image)
+                           ,std::ref(loaded_texture)
                            ,std::ref(loaded_image_plane)
                            ,std::ref(app_is_running)
                            );
@@ -189,6 +191,7 @@ void RenderTask(sf::RenderWindow & window
                ,std::string & image_file_path
                ,sf::RectangleShape & bg_image_plane
                ,sf::Image & loaded_image
+               ,sf::Texture & loaded_texture
                ,sf::Sprite & loaded_image_plane
                ,bool & app_is_running
                )
@@ -200,14 +203,12 @@ void RenderTask(sf::RenderWindow & window
   {
     ImGui::SFML::Update(window, delta_clock.restart());
 
-    if (image_file_path.empty())
-    {
-      ImGui::Begin("Click Button to Load Image...");
-    }
-    else
-    {
-      ImGui::Begin(image_file_path.c_str());
-    }
+    ////// imgui
+
+    ImGui::Begin("Menu", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+
+    ImGui::Text(image_file_path.c_str());
+    ImGui::SameLine();
 
     if(ImGui::Button("Load Image"))
     {
@@ -221,9 +222,23 @@ void RenderTask(sf::RenderWindow & window
                                                        );
 
       image_file_path = std::string(selected_file);
+
+      if(loaded_image.loadFromFile(image_file_path))
+      {
+        spdlog::info("New image loaded");
+        loaded_texture.loadFromImage(loaded_image);
+        loaded_image_plane.setTexture(loaded_texture);
+        loaded_image_plane.setPosition(8, 8);
+      }
+      else
+      {
+        spdlog::warn("Unable to load image");
+      }
     }
 
     ImGui::End();
+
+    //////
 
     window.clear(sf::Color::Black);
     window.draw(bg_image_plane);
