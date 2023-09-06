@@ -106,6 +106,10 @@ add_executable(diptool
                main.cpp
                CheckerBoardImage.cpp
                CheckerBoardImage.h
+               Menu.cpp
+               Menu.h
+               DownsampleMenu.cpp
+               DownsampleMenu.h
                ${TINYDIALOG}
               )
 

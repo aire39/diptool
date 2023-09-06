@@ -10,9 +10,10 @@
 
 #include <spdlog/spdlog.h>
 #include <CLI/CLI.hpp>
-#include <tinyfiledialogs/tinyfiledialogs.h>
 
 #include "CheckerBoardImage.h"
+#include "Menu.h"
+#include "DownsampleMenu.h"
 
 #define USE_ON_RESIZING true
 
@@ -55,7 +56,8 @@ int main(int argc, char*argv[])
   CLI11_PARSE(app, argc, argv)
 
   // setup logger
-  spdlog::enable_backtrace(32);
+  constexpr uint32_t number_of_backtrace_logs = 32;
+  spdlog::enable_backtrace(number_of_backtrace_logs);
 
   // load image file and checkerboard if image is not found
   CheckerBoardImage checker_image(window_width, window_height, bg_repeat_tiles);
@@ -199,116 +201,22 @@ void RenderTask(sf::RenderWindow & window
   window.setActive();
   sf::Clock delta_clock;
 
-  int ds_op = -1;
-  int current_item = 0;
+  DownsampleMenu downsample_menu;
+  Menu menu;
+  menu.SetImagePath(image_file_path);
 
   while(app_is_running)
   {
     ImGui::SFML::Update(window, delta_clock.restart());
 
-    ////// imgui
-
-    ImGui::Begin("Menu", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
-
-    if(ImGui::Button("Load Image"))
+    // GUI
+    menu.RenderMenu(loaded_image, loaded_texture, loaded_image_plane);
+    if(menu.IsDownSampleSet())
     {
-      char const * file_filter[2]={"*.png","*.jpg"};
-      auto selected_file = tinyfd_openFileDialog("Load Image"
-                                                       ,nullptr
-                                                       ,2
-                                                       ,file_filter
-                                                       ,"image files"
-                                                       ,0
-                                                       );
-
-      image_file_path = std::string(selected_file);
-
-      if(loaded_image.loadFromFile(image_file_path))
-      {
-        spdlog::info("New image loaded");
-        loaded_texture.loadFromImage(loaded_image);
-        loaded_image_plane.setTexture(loaded_texture);
-        loaded_image_plane.setPosition(8, 8);
-      }
-      else
-      {
-        spdlog::warn("Unable to load image");
-      }
+      downsample_menu.RenderMenu();
     }
 
-    ImGui::SameLine();
-    ImGui::Text(image_file_path.c_str());
-
-    ImGui::NewLine();
-
-    ImGui::Text("operations:");
-
-    const char * items_list[] = {"None", "Downsample"};
-
-    ImGui::Combo("##operations", &current_item, items_list, 2);
-
-    if (current_item == 1)
-    {
-      ImGui::Begin("Downsample Operation", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
-
-      ImGui::BeginGroup();
-
-      if (ImGui::RadioButton("Nearest", (ds_op == 0)))
-      {
-        ds_op = 0;
-      }
-
-      ImGui::SameLine();
-
-      if(ImGui::RadioButton("Bilinear", (ds_op == 1)))
-      {
-        ds_op = 1;
-      }
-
-      auto ButtonCenteredOnLine = [](const char* label, float alignment = 0.5f) -> bool
-      {
-        ImGuiStyle& style = ImGui::GetStyle();
-
-        float size = ImGui::CalcTextSize(label).x + style.FramePadding.x * 2.0f;
-        float avail = ImGui::GetContentRegionAvail().x;
-
-        float off = (avail - size) * alignment;
-        if (off > 0.0f)
-          ImGui::SetCursorPosX(ImGui::GetCursorPosX() + off);
-
-        return ImGui::Button(label);
-      };
-
-      if (ButtonCenteredOnLine("process image"))
-      {
-        if (ds_op == 0)
-        {
-          spdlog::info("processing image as nearest");
-          //TODO: do nearest neighbor downsampling
-        }
-        else if (ds_op == 1)
-        {
-          spdlog::info("processing image as bilinear");
-        }
-        else
-        {
-          spdlog::warn("No operation selected");
-          //TODO: do bilinear downsampling
-        }
-      }
-
-      ImGui::End();
-
-    }
-    else
-    {
-
-    }
-
-    ImGui::End();
-
-    //////
-
+    // Render
     window.clear(sf::Color::Black);
     window.draw(bg_image_plane);
 
@@ -346,7 +254,7 @@ void onResizing(const sf::Event& event
   tex.loadFromImage(image);
 
   bg_image_plane.setSize(sf::Vector2f(static_cast<float>(event.size.width)
-      ,static_cast<float>(event.size.height)
+                                     ,static_cast<float>(event.size.height)
   ));
 
   window.setSize(sf::Vector2u(event.size.width, event.size.height));
