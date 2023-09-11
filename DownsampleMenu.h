@@ -11,8 +11,12 @@ class DownsampleMenu
     DownsampleMenu() = default;
 
     void RenderMenu();
+    [[nodiscard]] MenuOp_Downsample CurrentOperation() const;
+    [[nodiscard]] int32_t DownsampleIterations() const;
+    bool ProcessBegin();
 
   private:
-    MenuOp_Downsample operation = MenuOp_Downsample::NEAREST;
-
+    bool processBegin = false;
+    MenuOp_Downsample operation = MenuOp_Downsample::DECIMATE;
+    int32_t downsamepleIters = 0;
 };

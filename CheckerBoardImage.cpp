@@ -1,14 +1,14 @@
 #include "CheckerBoardImage.h"
 #include <cmath>
 
-CheckerBoardImage::CheckerBoardImage()
-  : CheckerBoardImage(800, 600, 32)
-{
-}
-
 CheckerBoardImage::CheckerBoardImage(uint32_t pixel_width, uint32_t pixel_height, uint32_t checker_tile_repeat)
 {
   Generate(pixel_width, pixel_height, checker_tile_repeat);
+}
+
+bool CheckerBoardImage::IsImageGenerated()
+{
+  return !image.empty() && (pixelWidth > 0) && (pixelHeight > 0);
 }
 
 void CheckerBoardImage::Generate(uint32_t pixel_width, uint32_t pixel_height, uint32_t repeat_checkers_per_line)
@@ -64,6 +64,16 @@ void CheckerBoardImage::Generate(uint32_t pixel_width, uint32_t pixel_height, ui
 const std::vector<uint8_t> & CheckerBoardImage::GetImage()
 {
   return image;
+}
+
+[[maybe_unused]] uint32_t CheckerBoardImage::GetImageWidth() const
+{
+  return pixelWidth;
+}
+
+[[maybe_unused]] uint32_t CheckerBoardImage::GetImageHeight() const
+{
+  return pixelHeight;
 }
 
 void CheckerBoardImage::SetPixelColor(uint32_t x, uint32_t y, const uint8_t rgb[3])

@@ -26,36 +26,68 @@ void DownsampleMenu::RenderMenu()
   ImGui::Begin("Downsample Operation", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 
   ImGui::BeginGroup();
+  ImGui::Text("downsample level:");
+  ImGui::SliderInt("##downsample_iterations", &downsamepleIters, 0, 5);
+  ImGui::EndGroup();
+
+  ImGui::NewLine();
+
+  ImGui::Text("downsample type:");
+
+  ImGui::BeginGroup();
+
+  if(ImGui::RadioButton("Decimate", (operation == MenuOp_Downsample::DECIMATE)))
+  {
+    operation = MenuOp_Downsample::DECIMATE;
+  }
+
+  ImGui::SameLine();
 
   if (ImGui::RadioButton("Nearest", (operation == MenuOp_Downsample::NEAREST)))
   {
     operation = MenuOp_Downsample::NEAREST;
   }
 
-  ImGui::SameLine();
-
-  if(ImGui::RadioButton("Bilinear", (operation == MenuOp_Downsample::BILINEAR)))
-  {
-    operation = MenuOp_Downsample::BILINEAR;
-  }
-
   ImGui::EndGroup();
 
-  if (ButtonCenteredOnLine("process image"))
+  ImGui::NewLine();
+
+  if (ButtonCenteredOnLine("save image"))
   {
     switch (operation)
     {
-      case MenuOp_Downsample::NEAREST:
-        spdlog::info("processing image as nearest");
-        //TODO: do nearest neighbor downsampling
+      case MenuOp_Downsample::DECIMATE:
+        spdlog::info("processing image as decimate");
         break;
 
-      case MenuOp_Downsample::BILINEAR:
-        spdlog::info("processing image as bilinear");
-        //TODO: do bilinear downsampling
+      case MenuOp_Downsample::NEAREST:
+        spdlog::info("processing image as nearest");
         break;
     }
+
+    processBegin = true;
   }
 
   ImGui::End();
+}
+
+MenuOp_Downsample DownsampleMenu::CurrentOperation() const
+{
+  return operation;
+}
+
+int32_t DownsampleMenu::DownsampleIterations() const
+{
+  return downsamepleIters;
+}
+
+bool DownsampleMenu::ProcessBegin()
+{
+  bool should_process = processBegin;
+  if (should_process)
+  {
+    processBegin = false;
+  }
+
+  return should_process;
 }
