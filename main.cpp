@@ -1,5 +1,6 @@
 #include <string_view>
 #include <thread>
+#include <fstream>
 
 #include <imgui.h>
 #include <imgui-SFML.h>
@@ -14,6 +15,7 @@
 #include "CheckerBoardImage.h"
 #include "Menu.h"
 #include "DownsampleMenu.h"
+#include "Operations/DownsampleOp.h"
 
 #define USE_ON_RESIZING true
 
@@ -95,7 +97,15 @@ int main(int argc, char*argv[])
 
   // setup sprite
   sf::Image bg_image;
-  bg_image.create(window_width, window_height, checker_image.GetImage().data());
+
+  if (checker_image.IsImageGenerated())
+  {
+    bg_image.create(window_width, window_height, checker_image.GetImage().data());
+  }
+  else
+  {
+    bg_image.create(window_width, window_height, sf::Color::Black);
+  }
 
   sf::Texture bg_texture;
   bg_texture.loadFromImage(bg_image);
@@ -201,9 +211,16 @@ void RenderTask(sf::RenderWindow & window
   window.setActive();
   sf::Clock delta_clock;
 
+  DownsampleOp downsample_op;
   DownsampleMenu downsample_menu;
+  int32_t current_downsample_level = -1;
+
   Menu menu;
   menu.SetImagePath(image_file_path);
+
+  sf::Image processed_image;
+  sf::Texture processed_texture;
+  sf::Sprite processed_sprite;
 
   while(app_is_running)
   {
@@ -214,15 +231,50 @@ void RenderTask(sf::RenderWindow & window
     if(menu.IsDownSampleSet())
     {
       downsample_menu.RenderMenu();
+
+      if (current_downsample_level != downsample_menu.DownsampleIterations())
+      {
+        current_downsample_level = downsample_menu.DownsampleIterations();
+
+        std::vector<uint8_t> source_pixels (loaded_image.getPixelsPtr(), (loaded_image.getPixelsPtr()+(loaded_image.getSize().x * loaded_image.getSize().y * 4)));
+        downsample_op.ProcessImage(downsample_menu.CurrentOperation(), source_pixels, loaded_image.getSize().x, loaded_image.getSize().y, 4, downsample_menu.DownsampleIterations());
+
+        const auto & result_image = downsample_op.GetImage();
+        processed_image.create(downsample_op.GetWidth(), downsample_op.GetHeight(), result_image.data());
+        processed_texture.loadFromImage(processed_image);
+        processed_sprite = sf::Sprite(processed_texture);
+      }
+
+      if (downsample_menu.ProcessBegin())
+      {
+        if (processed_image.saveToFile("output.png"))
+        {
+          spdlog::info("output buffer was written!");
+        }
+        else
+        {
+          spdlog::warn("output buffer was empty!");
+        }
+      }
     }
 
     // Render
     window.clear(sf::Color::Black);
     window.draw(bg_image_plane);
 
-    if (loaded_image.getSize() != sf::Vector2u(0.0f,0.0f))
+    if (loaded_image.getSize() != sf::Vector2u(0,0))
     {
       window.draw(loaded_image_plane);
+    }
+
+    if (processed_image.getSize() != sf::Vector2u(0, 0))
+    {
+      float shift_x = static_cast<float>(loaded_image.getSize().x - processed_image.getSize().x) / 2.0f;
+      float shift_y = static_cast<float>(loaded_image.getSize().y - processed_image.getSize().y) / 2.0f;
+      float output_position = static_cast<float>(window.getSize().x) / 2.0f;
+
+      processed_sprite.setPosition(output_position + shift_x + 8.0f, shift_y + 8.0f);
+      window.draw(processed_sprite);
     }
 
     ImGui::SFML::Render(window);

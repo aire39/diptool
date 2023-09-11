@@ -102,6 +102,8 @@ file(GLOB TINYDIALOG ${PROJECT_SOURCE_DIR}/libs/tinyfiledialogs/tinyfiledialogs.
 
 ## files needed to build project
 
+include_directories(${PROJECT_SOURCE_DIR})
+
 add_executable(diptool
                main.cpp
                CheckerBoardImage.cpp
@@ -110,6 +112,8 @@ add_executable(diptool
                Menu.h
                DownsampleMenu.cpp
                DownsampleMenu.h
+               Operations/DownsampleOp.cpp
+               Operations/DownsampleOp.h
                ${TINYDIALOG}
               )
 
