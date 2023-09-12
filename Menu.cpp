@@ -15,6 +15,7 @@ void Menu::RenderMenu(sf::Image & image, sf::Texture & texture, sf::Sprite & spr
 {
   ImGui::Begin("Menu", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 
+  ImGui::SeparatorText("source");
   if(ImGui::Button("Load Image"))
   {
     char const * file_filter[2]={"*.png","*.jpg"};
@@ -46,7 +47,12 @@ void Menu::RenderMenu(sf::Image & image, sf::Texture & texture, sf::Sprite & spr
 
   ImGui::NewLine();
 
-  ImGui::Text("operations:");
+  ImGui::SeparatorText("options");
+  ImGui::Checkbox("use output as source", &outputAsSource);
+
+  ImGui::NewLine();
+
+  ImGui::SeparatorText("operations");
 
   const char * items_list[] = {"None", "Downsample"};
 
@@ -58,4 +64,9 @@ void Menu::RenderMenu(sf::Image & image, sf::Texture & texture, sf::Sprite & spr
 bool Menu::IsDownSampleSet() const
 {
   return (currentItem == 1);
+}
+
+bool Menu::IsOutputAsSourceSet() const
+{
+  return outputAsSource;
 }
