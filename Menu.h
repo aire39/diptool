@@ -14,6 +14,7 @@ class Menu {
 
     [[nodiscard]] bool IsDownSampleSet() const;
     [[nodiscard]] bool IsUpSampleSet() const;
+    [[nodiscard]] bool IsVaryingBitsSet() const;
     [[nodiscard]] bool IsOutputAsSourceSet() const;
 
   private:

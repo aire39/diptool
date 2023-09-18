@@ -19,6 +19,8 @@
 #include "operations/DownsampleOp.h"
 #include "menus/UpsampleMenu.h"
 #include "operations/UpsampleOp.h"
+#include "menus/VaryBitsMenu.h"
+#include "operations/VaryBitsOp.h"
 
 #define USE_ON_RESIZING true
 
@@ -222,6 +224,10 @@ void RenderTask(sf::RenderWindow & window
   UpsampleMenu upsample_menu;
   int32_t current_upsample_level = -1;
 
+  VaryBitsOp varyingbits_op;
+  VaryBitsMenu varyingbits_menu;
+  int32_t current_bit_level = -1;
+
   Menu menu;
   menu.SetImagePath(image_file_path);
 
@@ -304,6 +310,36 @@ void RenderTask(sf::RenderWindow & window
       }
 
       if (upsample_menu.ProcessBegin())
+      {
+        if (processed_image.saveToFile("output.png"))
+        {
+          spdlog::info("output buffer was written!");
+        }
+        else
+        {
+          spdlog::warn("output buffer was empty!");
+        }
+      }
+    }
+
+    if (menu.IsVaryingBitsSet())
+    {
+      varyingbits_menu.RenderMenu();
+
+      if ((current_bit_level != varyingbits_menu.BitScale()))
+      {
+        current_bit_level = varyingbits_menu.BitScale();
+
+        std::vector<uint8_t> source_pixels (loaded_image.getPixelsPtr(), (loaded_image.getPixelsPtr()+(loaded_image.getSize().x * loaded_image.getSize().y * 4)));
+        varyingbits_op.ProcessImage(varyingbits_menu.BitScale(), source_pixels, loaded_image.getSize().x, loaded_image.getSize().y, 4);
+
+        const auto & result_image = varyingbits_op.GetImage();
+        processed_image.create(varyingbits_op.GetWidth(), varyingbits_op.GetHeight(), result_image.data());
+        processed_texture.loadFromImage(processed_image);
+        processed_sprite = sf::Sprite(processed_texture);
+      }
+
+      if (varyingbits_menu.ProcessBegin())
       {
         if (processed_image.saveToFile("output.png"))
         {
