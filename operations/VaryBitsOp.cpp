@@ -5,6 +5,12 @@
 #include <limits>
 #include <spdlog/spdlog.h>
 
+#define PRINT_DEBUG_VARYING_BITS false
+
+#if PRINT_DEBUG_VARYING_BITS
+#include <iostream>
+#endif
+
 namespace
 {
   std::array<uint8_t, 3> pixel_gather(const int32_t & x
@@ -25,17 +31,17 @@ namespace
       if ((pixel_byte_index_r > 0) && (pixel_byte_index_r < w))
       {
         pixel_value_red += static_cast<int32_t>(source_image[((x + i) * bpp) + (y * w * bpp) + 0]);
-        pixel_value_green += static_cast<int32_t>(source_image[((x + i) * bpp) + (y * w * bpp)] + 1);
-        pixel_value_blue += static_cast<int32_t>(source_image[((x + i) * bpp) + (y * w * bpp)] + 2);
+        pixel_value_green += static_cast<int32_t>(source_image[((x + i) * bpp) + (y * w * bpp) + 1]);
+        pixel_value_blue += static_cast<int32_t>(source_image[((x + i) * bpp) + (y * w * bpp) + 2]);
       }
       else
       {
         const int32_t x_fix = std::clamp(x, 0, (w - 1));
         const int32_t y_fix = std::clamp(y, 0, (h - 1));
 
-        pixel_value_red += static_cast<int32_t>(source_image[(x_fix * bpp) + (y_fix * w * bpp)] + 0);
-        pixel_value_green += static_cast<int32_t>(source_image[(x_fix * bpp) + (y_fix * w * bpp)] + 1);
-        pixel_value_blue += static_cast<int32_t>(source_image[(x_fix * bpp) + (y_fix * w * bpp)] + 2);
+        pixel_value_red += static_cast<int32_t>(source_image[(x_fix * bpp) + (y_fix * w * bpp) + 0]);
+        pixel_value_green += static_cast<int32_t>(source_image[(x_fix * bpp) + (y_fix * w * bpp) + 1]);
+        pixel_value_blue += static_cast<int32_t>(source_image[(x_fix * bpp) + (y_fix * w * bpp) + 2]);
       }
     }
 
@@ -94,6 +100,11 @@ int32_t VaryBitsOp::GetHeight() const
   return outHeight;
 }
 
+std::set<uint32_t> VaryBitsOp::GetUniquePixelValues() const
+{
+  return uniquePixelValues;
+}
+
 void VaryBitsOp::BitLevelAlgorithm(const std::vector<uint8_t> & source_image
                                   ,uint32_t width
                                   ,uint32_t height
@@ -101,13 +112,13 @@ void VaryBitsOp::BitLevelAlgorithm(const std::vector<uint8_t> & source_image
                                   ,uint32_t bit_level
                                   ,bool bit_contrast)
 {
-  constexpr uint32_t combine_value = 1;
+  constexpr uint32_t combine_value = 0;
   auto dest_result = result = source_image;
 
   outWidth = static_cast<int32_t>(width);
   outHeight = static_cast<int32_t>(height);
 
-  const uint32_t bits_to_shift = 8 - bit_level;
+  const uint32_t bits_to_shift = (8 - bit_level);
 
   for (int32_t i=0; i<height; i++)
   {
@@ -122,18 +133,29 @@ void VaryBitsOp::BitLevelAlgorithm(const std::vector<uint8_t> & source_image
                                                                ,bpp
                                                                ,dest_result);
 
+      uint32_t pixel_value_sum = (pixel_rgb_value[0] + pixel_rgb_value[1] + pixel_rgb_value[2]) / 3;
+
+
+
       if (bits_to_shift > 0)
       {
-        uint32_t pixel_value_sum = (pixel_rgb_value[0] + pixel_rgb_value[1] + pixel_rgb_value[2]) / 3;
         auto gray_pixel = static_cast<uint8_t>(pixel_value_sum);
 
-        uint8_t check = (gray_pixel & (0xFF >> bits_to_shift));
-        uint32_t value = check > 0 ? gray_pixel & (0xFF >> bits_to_shift) : 0;
+        int32_t shift_value = (0xFF >> bits_to_shift);
+
+        uint8_t check = (gray_pixel & shift_value);
+        uint32_t value = check > 0 ? (gray_pixel & shift_value) : 0;
         value = bit_contrast ? value << bits_to_shift : value;
 
         pixel_rgb_value[0] = static_cast<uint8_t>(value);
         pixel_rgb_value[1] = static_cast<uint8_t>(value);
         pixel_rgb_value[2] = static_cast<uint8_t>(value);
+
+        uniquePixelValues.emplace(value);
+      }
+      else
+      {
+        uniquePixelValues.emplace(pixel_value_sum);
       }
 
       set_pixel(j
@@ -145,4 +167,12 @@ void VaryBitsOp::BitLevelAlgorithm(const std::vector<uint8_t> & source_image
                );
     }
   }
+
+  #if PRINT_DEBUG_VARYING_BITS
+  for (const int32_t & pixel_value : uniquePixelValues)
+  {
+    std::cout << pixel_value << ", ";
+  }
+  std::cout << std::endl;
+  #endif
 }

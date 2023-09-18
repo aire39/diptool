@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <vector>
+#include <set>
 
 class VaryBitsOp
 {
@@ -21,9 +22,12 @@ class VaryBitsOp
     [[nodiscard]] int32_t GetWidth() const;
     [[nodiscard]] int32_t GetHeight() const;
 
+    [[nodiscard]] std::set<uint32_t> GetUniquePixelValues() const;
+
   private:
     int32_t outWidth = 0;
     int32_t outHeight = 0;
+    std::set<uint32_t> uniquePixelValues;
     std::vector<uint8_t> result;
 
     void BitLevelAlgorithm(const std::vector<uint8_t> & source_image

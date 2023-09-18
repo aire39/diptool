@@ -25,17 +25,17 @@ namespace
       if ((pixel_byte_index_r > 0) && (pixel_byte_index_r < w))
       {
         pixel_value_red += static_cast<int32_t>(source_image[((x + i) * bpp) + (y * w * bpp) + 0]);
-        pixel_value_green += static_cast<int32_t>(source_image[((x + i) * bpp) + (y * w * bpp)] + 1);
-        pixel_value_blue += static_cast<int32_t>(source_image[((x + i) * bpp) + (y * w * bpp)] + 2);
+        pixel_value_green += static_cast<int32_t>(source_image[((x + i) * bpp) + (y * w * bpp) + 1]);
+        pixel_value_blue += static_cast<int32_t>(source_image[((x + i) * bpp) + (y * w * bpp) + 2]);
       }
       else
       {
         const int32_t x_fix = std::clamp(x, 0, (w - 1));
         const int32_t y_fix = std::clamp(y, 0, (h - 1));
 
-        pixel_value_red += static_cast<int32_t>(source_image[(x_fix * bpp) + (y_fix * w * bpp)] + 0);
-        pixel_value_green += static_cast<int32_t>(source_image[(x_fix * bpp) + (y_fix * w * bpp)] + 1);
-        pixel_value_blue += static_cast<int32_t>(source_image[(x_fix * bpp) + (y_fix * w * bpp)] + 2);
+        pixel_value_red += static_cast<int32_t>(source_image[(x_fix * bpp) + (y_fix * w * bpp) + 0]);
+        pixel_value_green += static_cast<int32_t>(source_image[(x_fix * bpp) + (y_fix * w * bpp) + 1]);
+        pixel_value_blue += static_cast<int32_t>(source_image[(x_fix * bpp) + (y_fix * w * bpp) + 2]);
       }
     }
 
