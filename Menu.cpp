@@ -54,9 +54,9 @@ void Menu::RenderMenu(sf::Image & image, sf::Texture & texture, sf::Sprite & spr
 
   ImGui::SeparatorText("operations");
 
-  const char * items_list[] = {"None", "Downsample"};
+  const std::vector<const char*> items_list = {"None", "Downsample", "Upsample"};
 
-  ImGui::Combo("##operations", &currentItem, items_list, 2);
+  ImGui::Combo("##operations", &currentItem, items_list.data(), static_cast<int32_t>(items_list.size()));
 
   ImGui::End();
 }
@@ -64,6 +64,11 @@ void Menu::RenderMenu(sf::Image & image, sf::Texture & texture, sf::Sprite & spr
 bool Menu::IsDownSampleSet() const
 {
   return (currentItem == 1);
+}
+
+bool Menu::IsUpSampleSet() const
+{
+  return (currentItem == 2);
 }
 
 bool Menu::IsOutputAsSourceSet() const

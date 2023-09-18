@@ -10,6 +10,7 @@ namespace
   std::array<uint8_t, 3> pixel_gather(const int32_t & x
                                      ,const int32_t & y
                                      ,const int32_t & w
+                                     ,const int32_t & h
                                      ,const int32_t & number_of_pixel_neighbors
                                      ,const int32_t & bpp
                                      ,const std::vector<uint8_t> & source_image)
@@ -20,7 +21,8 @@ namespace
 
     for (int32_t i=0; i<(number_of_pixel_neighbors+1); i++)
     {
-      if ((x+i) < w)
+      const size_t pixel_byte_index_r = ((x + i) * bpp) + (y * w * bpp) + 3;
+      if ((pixel_byte_index_r > 0) && (pixel_byte_index_r < w))
       {
         pixel_value_red += static_cast<int32_t>(source_image[((x + i) * bpp) + (y * w * bpp) + 0]);
         pixel_value_green += static_cast<int32_t>(source_image[((x + i) * bpp) + (y * w * bpp)] + 1);
@@ -28,9 +30,12 @@ namespace
       }
       else
       {
-        pixel_value_red += static_cast<int32_t>(source_image[(x * bpp) + (y * w * bpp)] + 0);
-        pixel_value_green += static_cast<int32_t>(source_image[(x * bpp) + (y * w * bpp)] + 1);
-        pixel_value_blue += static_cast<int32_t>(source_image[(x * bpp) + (y * w * bpp)] + 2);
+        const int32_t x_fix = std::clamp(x, 0, (w - 1));
+        const int32_t y_fix = std::clamp(y, 0, (h - 1));
+
+        pixel_value_red += static_cast<int32_t>(source_image[(x_fix * bpp) + (y_fix * w * bpp)] + 0);
+        pixel_value_green += static_cast<int32_t>(source_image[(x_fix * bpp) + (y_fix * w * bpp)] + 1);
+        pixel_value_blue += static_cast<int32_t>(source_image[(x_fix * bpp) + (y_fix * w * bpp)] + 2);
       }
     }
 
@@ -129,6 +134,7 @@ void DownsampleOp::DecimateAlgorithm(const std::vector<uint8_t> & source_image
         auto pixel_rgb_value_0 = pixel_gather(j
                                                                  ,i
                                                                  ,static_cast<int32_t>(width >> r)
+                                                                 ,static_cast<int32_t>(height >> r)
                                                                  ,combine_value
                                                                  ,bpp
                                                                  ,dest_result);
@@ -180,6 +186,7 @@ void DownsampleOp::NearestAlgorithm(const std::vector<uint8_t> & source_image
         auto pixel_rgb_value_0 = pixel_gather(j
                                                                  ,i
                                                                  ,static_cast<int32_t>(width >> r)
+                                                                 ,static_cast<int32_t>(height >> r)
                                                                  ,combine_value
                                                                  ,bpp
                                                                  ,dest_result);
@@ -187,6 +194,7 @@ void DownsampleOp::NearestAlgorithm(const std::vector<uint8_t> & source_image
         auto pixel_rgb_value_1 = pixel_gather(j
                                                                  ,i+1
                                                                  ,static_cast<int32_t>(width >> r)
+                                                                 ,static_cast<int32_t>(height >> r)
                                                                  ,combine_value
                                                                  ,bpp
                                                                  ,dest_result);
