@@ -26,11 +26,13 @@ void VaryBitsMenu::RenderMenu()
   ImGui::Begin("Varying Bits Operation", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 
   ImGui::BeginGroup();
-  ImGui::Text("how many bits to shift (right):");
-  ImGui::SliderInt("##bit_level", &setBit, 0, 7);
+  ImGui::Text("Bits Level:");
+  ImGui::SliderInt("##bit_level", &setBit, 8, 1);
   ImGui::EndGroup();
 
   ImGui::NewLine();
+
+  ImGui::Checkbox("contrast bit shift", &shiftBitsContrast);
 
   if (ButtonCenteredOnLine("save image"))
   {
@@ -43,6 +45,11 @@ void VaryBitsMenu::RenderMenu()
 int32_t VaryBitsMenu::BitScale() const
 {
   return setBit;
+}
+
+bool VaryBitsMenu::ShiftBitsForContrast() const
+{
+  return shiftBitsContrast;
 }
 
 bool VaryBitsMenu::ProcessBegin()

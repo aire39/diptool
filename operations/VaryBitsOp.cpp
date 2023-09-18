@@ -68,13 +68,14 @@ namespace
 }
 
 std::vector<uint8_t> VaryBitsOp::ProcessImage(int32_t bit_level_operation
+                                             ,bool bit_contrast
                                              ,const std::vector<uint8_t> & source_image
                                              ,uint32_t width
                                              ,uint32_t height
                                              ,uint8_t bpp)
 {
-  spdlog::info("varying bits level: {}", static_cast<uint16_t>(bit_level_operation));
-  BitLevelAlgorithm(source_image, width, height, bpp, bit_level_operation);
+  spdlog::info("varying bits level: {}", bit_level_operation);
+  BitLevelAlgorithm(source_image, width, height, bpp, bit_level_operation, bit_contrast);
   return result;
 }
 
@@ -97,13 +98,16 @@ void VaryBitsOp::BitLevelAlgorithm(const std::vector<uint8_t> & source_image
                                   ,uint32_t width
                                   ,uint32_t height
                                   ,uint8_t bpp
-                                  ,uint8_t bit_level)
+                                  ,uint32_t bit_level
+                                  ,bool bit_contrast)
 {
   constexpr uint32_t combine_value = 1;
   auto dest_result = result = source_image;
 
   outWidth = static_cast<int32_t>(width);
   outHeight = static_cast<int32_t>(height);
+
+  const uint32_t bits_to_shift = 8 - bit_level;
 
   for (int32_t i=0; i<height; i++)
   {
@@ -118,11 +122,18 @@ void VaryBitsOp::BitLevelAlgorithm(const std::vector<uint8_t> & source_image
                                                                ,bpp
                                                                ,dest_result);
 
-      if (bit_level > 0)
+      if (bits_to_shift > 0)
       {
-        pixel_rgb_value[0] = (pixel_rgb_value[0] & (0x80 >> bit_level)) > 0 ? pixel_rgb_value[0] & (0xFF >> bit_level) << bit_level : 0;
-        pixel_rgb_value[1] = pixel_rgb_value[0];
-        pixel_rgb_value[2] = pixel_rgb_value[0];
+        uint32_t pixel_value_sum = (pixel_rgb_value[0] + pixel_rgb_value[1] + pixel_rgb_value[2]) / 3;
+        auto gray_pixel = static_cast<uint8_t>(pixel_value_sum);
+
+        uint8_t check = (gray_pixel & (0xFF >> bits_to_shift));
+        uint32_t value = check > 0 ? gray_pixel & (0xFF >> bits_to_shift) : 0;
+        value = bit_contrast ? value << bits_to_shift : value;
+
+        pixel_rgb_value[0] = static_cast<uint8_t>(value);
+        pixel_rgb_value[1] = static_cast<uint8_t>(value);
+        pixel_rgb_value[2] = static_cast<uint8_t>(value);
       }
 
       set_pixel(j
