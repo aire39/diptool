@@ -112,8 +112,12 @@ add_executable(diptool
                Menu.h
                DownsampleMenu.cpp
                DownsampleMenu.h
-               Operations/DownsampleOp.cpp
-               Operations/DownsampleOp.h
+               menus/UpsampleMenu.cpp
+               menus/UpsampleMenu.h
+               operations/DownsampleOp.cpp
+               operations/DownsampleOp.h
+               operations/UpsampleOp.cpp
+               operations/UpsampleOp.h
                ${TINYDIALOG}
               )
 

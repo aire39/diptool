@@ -14,8 +14,11 @@
 
 #include "CheckerBoardImage.h"
 #include "Menu.h"
+
 #include "DownsampleMenu.h"
-#include "Operations/DownsampleOp.h"
+#include "operations/DownsampleOp.h"
+#include "menus/UpsampleMenu.h"
+#include "operations/UpsampleOp.h"
 
 #define USE_ON_RESIZING true
 
@@ -215,6 +218,10 @@ void RenderTask(sf::RenderWindow & window
   DownsampleMenu downsample_menu;
   int32_t current_downsample_level = -1;
 
+  UpsampleOp upsample_op;
+  UpsampleMenu upsample_menu;
+  int32_t current_upsample_level = -1;
+
   Menu menu;
   menu.SetImagePath(image_file_path);
 
@@ -222,11 +229,15 @@ void RenderTask(sf::RenderWindow & window
   sf::Texture processed_texture;
   sf::Sprite processed_sprite;
 
+  sf::Image processed_image_copy;
+  sf::Texture processed_texture_copy;
+  sf::Sprite processed_sprite_copy;
+
   while(app_is_running)
   {
     ImGui::SFML::Update(window, delta_clock.restart());
 
-    // GUI
+    // GUI and operations
     menu.RenderMenu(loaded_image, loaded_texture, loaded_image_plane);
     if(menu.IsDownSampleSet())
     {
@@ -243,9 +254,56 @@ void RenderTask(sf::RenderWindow & window
         processed_image.create(downsample_op.GetWidth(), downsample_op.GetHeight(), result_image.data());
         processed_texture.loadFromImage(processed_image);
         processed_sprite = sf::Sprite(processed_texture);
+
+        if (menu.IsOutputAsSourceSet())
+        {
+          processed_image_copy.create(processed_image.getSize().x, processed_image.getSize().y, processed_image.getPixelsPtr());
+          processed_texture_copy.loadFromImage(processed_image_copy);
+          processed_sprite_copy.setTexture(processed_texture_copy);
+        }
       }
 
       if (downsample_menu.ProcessBegin())
+      {
+        if (processed_image.saveToFile("output.png"))
+        {
+          spdlog::info("output buffer was written!");
+        }
+        else
+        {
+          spdlog::warn("output buffer was empty!");
+        }
+      }
+    }
+
+    if (menu.IsUpSampleSet())
+    {
+      upsample_menu.RenderMenu();
+
+      if (current_upsample_level != upsample_menu.UpsampleIterations())
+      {
+        current_upsample_level = upsample_menu.UpsampleIterations();
+
+        std::vector<uint8_t> source_pixels;
+
+        if (menu.IsOutputAsSourceSet())
+        {
+          source_pixels = std::vector<uint8_t>(processed_image_copy.getPixelsPtr(), (processed_image_copy.getPixelsPtr() + (processed_image_copy.getSize().x * processed_image_copy.getSize().y * 4)));
+          upsample_op.ProcessImage(upsample_menu.CurrentOperation(), source_pixels, processed_image_copy.getSize().x, processed_image_copy.getSize().y, 4, upsample_menu.UpsampleIterations());
+        }
+        else
+        {
+          source_pixels = std::vector<uint8_t>(loaded_image.getPixelsPtr(), (loaded_image.getPixelsPtr() + (loaded_image.getSize().x * loaded_image.getSize().y * 4)));
+          upsample_op.ProcessImage(upsample_menu.CurrentOperation(), source_pixels, loaded_image.getSize().x, loaded_image.getSize().y, 4, upsample_menu.UpsampleIterations());
+        }
+
+        const auto & result_image = upsample_op.GetImage();
+        processed_image.create(upsample_op.GetWidth(), upsample_op.GetHeight(), result_image.data());
+        processed_texture.loadFromImage(processed_image);
+        processed_sprite = sf::Sprite(processed_texture);
+      }
+
+      if (upsample_menu.ProcessBegin())
       {
         if (processed_image.saveToFile("output.png"))
         {
