@@ -114,10 +114,14 @@ add_executable(diptool
                DownsampleMenu.h
                menus/UpsampleMenu.cpp
                menus/UpsampleMenu.h
+               menus/VaryBitsMenu.cpp
+               menus/VaryBitsMenu.h
                operations/DownsampleOp.cpp
                operations/DownsampleOp.h
                operations/UpsampleOp.cpp
                operations/UpsampleOp.h
+               operations/VaryBitsOp.cpp
+               operations/VaryBitsOp.h
                ${TINYDIALOG}
               )
 
