@@ -331,7 +331,7 @@ void RenderTask(sf::RenderWindow & window
         current_bit_level = varyingbits_menu.BitScale();
 
         std::vector<uint8_t> source_pixels (loaded_image.getPixelsPtr(), (loaded_image.getPixelsPtr()+(loaded_image.getSize().x * loaded_image.getSize().y * 4)));
-        varyingbits_op.ProcessImage(varyingbits_menu.BitScale(), source_pixels, loaded_image.getSize().x, loaded_image.getSize().y, 4);
+        varyingbits_op.ProcessImage(varyingbits_menu.BitScale(), varyingbits_menu.ShiftBitsForContrast(), source_pixels, loaded_image.getSize().x, loaded_image.getSize().y, 4);
 
         const auto & result_image = varyingbits_op.GetImage();
         processed_image.create(varyingbits_op.GetWidth(), varyingbits_op.GetHeight(), result_image.data());

@@ -10,6 +10,7 @@ class VaryBitsOp
     ~VaryBitsOp() = default;
 
     std::vector<uint8_t> ProcessImage(int32_t bit_level_operation
+                                     ,bool bit_contrast
                                      ,const std::vector<uint8_t> & source_image
                                      ,uint32_t width
                                      ,uint32_t height
@@ -29,7 +30,8 @@ class VaryBitsOp
                           ,uint32_t width
                           ,uint32_t height
                           ,uint8_t bpp
-                          ,uint8_t bit_level);
+                          ,uint32_t bit_level
+                          ,bool bit_contrast);
 
 
 };
