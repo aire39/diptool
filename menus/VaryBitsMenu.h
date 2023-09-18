@@ -9,7 +9,7 @@ class VaryBitsMenu
 
     void RenderMenu();
     [[nodiscard]] int32_t BitScale() const;
-    bool ShiftBitsForContrast() const;
+    [[nodiscard]] bool ShiftBitsForContrast() const;
     bool ProcessBegin();
 
 private:
