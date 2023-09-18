@@ -33,7 +33,7 @@ void Menu::RenderMenu(sf::Image & image, sf::Texture & texture, sf::Sprite & spr
     {
       spdlog::info("New image loaded");
       texture.loadFromImage(image);
-      sprite.setTexture(texture);
+      sprite.setTexture(texture, true);
       sprite.setPosition(8, 8);
     }
     else
