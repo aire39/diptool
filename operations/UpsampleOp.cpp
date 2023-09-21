@@ -111,10 +111,10 @@ int32_t UpsampleOp::GetHeight() const
 }
 
 void UpsampleOp::NearestAlgorithm(const std::vector<uint8_t> & source_image
-                                   ,uint32_t width
-                                   ,uint32_t height
-                                   ,uint8_t bpp
-                                   ,uint16_t iterations)
+                                 ,uint32_t width
+                                 ,uint32_t height
+                                 ,uint8_t bpp
+                                 ,uint16_t iterations)
 {
   constexpr uint32_t combine_value = 1;
 
@@ -125,9 +125,9 @@ void UpsampleOp::NearestAlgorithm(const std::vector<uint8_t> & source_image
 
   for (int32_t r=0; r<iterations; r++)
   {
-    const auto new_size = static_cast<uint32_t>(std::floor(width << (r+1)))
-                                     * static_cast<uint32_t>(std::floor(height << (r+1)))
-                                     * bpp;
+    const auto new_size = static_cast<uint32_t>( std::floor(width << (r+1)))
+                                               * static_cast<uint32_t>(std::floor(height << (r+1)))
+                                               * bpp;
 
     result.resize(new_size, 0);
 
@@ -137,12 +137,12 @@ void UpsampleOp::NearestAlgorithm(const std::vector<uint8_t> & source_image
       {
         // grab the pixel value of the source and set the pixel to the correct destination
         auto pixel_rgb_value = pixel_gather(j
-                                                                 ,i
-                                                                 ,static_cast<int32_t>(width << r)
-                                                                 ,static_cast<int32_t>(height << r)
-                                                                 ,combine_value
-                                                                 ,bpp
-                                                                 ,dest_result);
+                                           ,i
+                                           ,static_cast<int32_t>(width << r)
+                                           ,static_cast<int32_t>(height << r)
+                                           ,combine_value
+                                           ,bpp
+                                           ,dest_result);
 
         set_pixel((j * 2)
                  ,(i * 2)
@@ -197,9 +197,9 @@ void UpsampleOp::LinearAlgorithm(const std::vector<uint8_t> & source_image
 
   for (int32_t r=0; r<iterations; r++)
   {
-    const auto new_size = static_cast<uint32_t>(std::floor(width << (r+1)))
-                                     * static_cast<uint32_t>(std::floor(height << (r+1)))
-                                     * bpp;
+    const auto new_size = static_cast<uint32_t>( std::floor(width << (r+1)))
+                                               * static_cast<uint32_t>(std::floor(height << (r+1)))
+                                               * bpp;
 
     result.resize(new_size, 0);
 
@@ -209,48 +209,39 @@ void UpsampleOp::LinearAlgorithm(const std::vector<uint8_t> & source_image
       {
         // grab the pixel value of the source and set the pixel to the correct destination
         auto pixel_rgb_value_left = pixel_gather((j - 1)
-                                                                 ,i
-                                                                 ,static_cast<int32_t>(width << r)
-                                                                 ,static_cast<int32_t>(height << r)
-                                                                 ,combine_value
-                                                                 ,bpp
-                                                                 ,dest_result);
+                                                ,i
+                                                ,static_cast<int32_t>(width << r)
+                                                ,static_cast<int32_t>(height << r)
+                                                ,combine_value
+                                                ,bpp
+                                                ,dest_result);
 
         auto pixel_rgb_value_right = pixel_gather((j + 1)
-                                                                 ,i
-                                                                 ,static_cast<int32_t>(width << r)
-                                                                 ,static_cast<int32_t>(height << r)
-                                                                 ,combine_value
-                                                                 ,bpp
-                                                                 ,dest_result);
+                                                 ,i
+                                                 ,static_cast<int32_t>(width << r)
+                                                 ,static_cast<int32_t>(height << r)
+                                                 ,combine_value
+                                                 ,bpp
+                                                 ,dest_result);
 
-        auto pixel_rgb_value_top = pixel_gather(j
-                                                                 ,(i - 1)
-                                                                 ,static_cast<int32_t>(width << r)
-                                                                 ,static_cast<int32_t>(height << r)
-                                                                 ,combine_value
-                                                                 ,bpp
-                                                                 ,dest_result);
+        // get the 2 (x,y) coordinates (left and right neighboring pixels) that need to be used to produce a linear factor to be multiplied
+        // against the intensity values at those corners. This needs to be done for each channel. Assuming
+        // an RGB pixel (ignoring the Alpha channel)
 
-        auto pixel_rgb_value_bottom = pixel_gather(j
-                                                                 ,(i + 1)
-                                                                 ,static_cast<int32_t>(width << r)
-                                                                 ,static_cast<int32_t>(height << r)
-                                                                 ,combine_value
-                                                                 ,bpp
-                                                                 ,dest_result);
+        std::array<int32_t, 3> pixel_rgb_value_sum = {0, 0, 0};
 
-        auto pixel_rgb_value_center = pixel_gather(j
-                                                                       ,i
-                                                                       ,static_cast<int32_t>(width << r)
-                                                                       ,static_cast<int32_t>(height << r)
-                                                                       ,combine_value
-                                                                       ,bpp
-                                                                       ,dest_result);
+        auto idx_tr = static_cast<float>(j+1);
+        auto idx_tl = static_cast<float>(j-1);
+        auto idx_px  = (idx_tr + idx_tl) / 2.0f;
 
-        const std::array<int32_t, 3> pixel_rgb_value_sum = {(pixel_rgb_value_left[0]+pixel_rgb_value_right[0]+pixel_rgb_value_top[0]+pixel_rgb_value_bottom[0]+pixel_rgb_value_center[0]) / 5
-                                                           ,(pixel_rgb_value_left[1]+pixel_rgb_value_right[1]+pixel_rgb_value_top[1]+pixel_rgb_value_bottom[1]+pixel_rgb_value_center[1]) / 5
-                                                           ,(pixel_rgb_value_left[2]+pixel_rgb_value_right[2]+pixel_rgb_value_top[2]+pixel_rgb_value_bottom[2]+pixel_rgb_value_center[2]) / 5};
+        for (size_t k=0; k<3; k++)
+        {
+          float pix_1 = ((idx_tr - idx_px) / (idx_tr - idx_tl)) * static_cast<float>(pixel_rgb_value_left[k]);
+          float pix_2 = ((idx_px - idx_tl) / (idx_tr - idx_tl)) * static_cast<float>(pixel_rgb_value_right[k]);
+          float pix_p = (pix_1 + pix_2);
+
+          pixel_rgb_value_sum[k] = static_cast<int32_t>(pix_p);
+        }
 
         std::array<uint8_t, 3> pixel_rgb_value = {static_cast<uint8_t>(pixel_rgb_value_sum[0])
                                                  ,static_cast<uint8_t>(pixel_rgb_value_sum[1])
@@ -309,9 +300,9 @@ void UpsampleOp::BilinearAlgorithm(const std::vector<uint8_t> & source_image
 
   for (int32_t r=0; r<iterations; r++)
   {
-    const auto new_size = static_cast<uint32_t>(std::floor(width << (r+1)))
-                                     * static_cast<uint32_t>(std::floor(height << (r+1)))
-                                     * bpp;
+    const auto new_size = static_cast<uint32_t>( std::floor(width << (r+1)))
+                                               * static_cast<uint32_t>(std::floor(height << (r+1)))
+                                               * bpp;
 
     result.resize(new_size, 0);
 
@@ -320,84 +311,68 @@ void UpsampleOp::BilinearAlgorithm(const std::vector<uint8_t> & source_image
       for (int32_t j=0; j<(width << r); j++)
       {
         // grab the pixel value of the source and set the pixel to the correct destination
-        auto pixel_rgb_value_left = pixel_gather((j - 1)
-                                                                 ,i
-                                                                 ,static_cast<int32_t>(width << r)
-                                                                 ,static_cast<int32_t>(height << r)
-                                                                 ,combine_value
-                                                                 ,bpp
-                                                                 ,dest_result);
-
-        auto pixel_rgb_value_right = pixel_gather((j + 1)
-                                                                 ,i
-                                                                 ,static_cast<int32_t>(width << r)
-                                                                 ,static_cast<int32_t>(height << r)
-                                                                 ,combine_value
-                                                                 ,bpp
-                                                                 ,dest_result);
-
-        auto pixel_rgb_value_top = pixel_gather(j
-                                                                 ,(i - 1)
-                                                                 ,static_cast<int32_t>(width << r)
-                                                                 ,static_cast<int32_t>(height << r)
-                                                                 ,combine_value
-                                                                 ,bpp
-                                                                 ,dest_result);
-
-        auto pixel_rgb_value_bottom = pixel_gather(j
-                                                                 ,(i + 1)
-                                                                 ,static_cast<int32_t>(width << r)
-                                                                 ,static_cast<int32_t>(height << r)
-                                                                 ,combine_value
-                                                                 ,bpp
-                                                                 ,dest_result);
 
         auto pixel_rgb_value_topleft = pixel_gather((j - 1)
-                                                                 ,(i - 1)
-                                                                 ,static_cast<int32_t>(width << r)
-                                                                 ,static_cast<int32_t>(height << r)
-                                                                 ,combine_value
-                                                                 ,bpp
-                                                                 ,dest_result);
+                                                   ,(i - 1)
+                                                   ,static_cast<int32_t>(width << r)
+                                                   ,static_cast<int32_t>(height << r)
+                                                   ,combine_value
+                                                   ,bpp
+                                                   ,dest_result);
 
         auto pixel_rgb_value_topright = pixel_gather((j + 1)
-                                                                 ,(i - 1)
-                                                                 ,static_cast<int32_t>(width << r)
-                                                                 ,static_cast<int32_t>(height << r)
-                                                                 ,combine_value
-                                                                 ,bpp
-                                                                 ,dest_result);
+                                                    ,(i - 1)
+                                                    ,static_cast<int32_t>(width << r)
+                                                    ,static_cast<int32_t>(height << r)
+                                                    ,combine_value
+                                                    ,bpp
+                                                    ,dest_result);
 
         auto pixel_rgb_value_bottomleft = pixel_gather((j - 1)
-                                                                 ,(i + 1)
-                                                                 ,static_cast<int32_t>(width << r)
-                                                                 ,static_cast<int32_t>(height << r)
-                                                                 ,combine_value
-                                                                 ,bpp
-                                                                 ,dest_result);
+                                                      ,(i + 1)
+                                                      ,static_cast<int32_t>(width << r)
+                                                      ,static_cast<int32_t>(height << r)
+                                                      ,combine_value
+                                                      ,bpp
+                                                      ,dest_result);
 
         auto pixel_rgb_value_bottomright = pixel_gather((j + 1)
-                                                                 ,(i + 1)
-                                                                 ,static_cast<int32_t>(width << r)
-                                                                 ,static_cast<int32_t>(height << r)
-                                                                 ,combine_value
-                                                                 ,bpp
-                                                                 ,dest_result);
+                                                       ,(i + 1)
+                                                       ,static_cast<int32_t>(width << r)
+                                                       ,static_cast<int32_t>(height << r)
+                                                       ,combine_value
+                                                       ,bpp
+                                                       ,dest_result);
 
-        auto pixel_rgb_value_center = pixel_gather(j
-                                                                       ,i
-                                                                       ,static_cast<int32_t>(width << r)
-                                                                       ,static_cast<int32_t>(height << r)
-                                                                       ,combine_value
-                                                                       ,bpp
-                                                                       ,dest_result);
+        // get the 4 (x,y) coordinates that need to be used to produce a linear factor to be multiplied
+        // against the intensity values at those corners. This needs to be done for each channel. Assuming
+        // an RGB pixel (ignoring the Alpha channel)
 
-        const std::array<int32_t, 3> pixel_rgb_value_sum = {((pixel_rgb_value_left[0]+pixel_rgb_value_right[0]+pixel_rgb_value_top[0]+pixel_rgb_value_bottom[0]+pixel_rgb_value_center[0]) +
-                                                            (pixel_rgb_value_topleft[0]+pixel_rgb_value_topright[0]+pixel_rgb_value_bottomleft[0]+pixel_rgb_value_bottomright[0])) / 9
-                                                           ,((pixel_rgb_value_left[1]+pixel_rgb_value_right[1]+pixel_rgb_value_top[1]+pixel_rgb_value_bottom[1]+pixel_rgb_value_center[1]) +
-                                                            (pixel_rgb_value_topleft[1]+pixel_rgb_value_topright[1]+pixel_rgb_value_bottomleft[1]+pixel_rgb_value_bottomright[1])) / 9
-                                                           ,((pixel_rgb_value_left[2]+pixel_rgb_value_right[2]+pixel_rgb_value_top[2]+pixel_rgb_value_bottom[2]+pixel_rgb_value_center[2]) +
-                                                            (pixel_rgb_value_topleft[2]+pixel_rgb_value_topright[2]+pixel_rgb_value_bottomleft[2]+pixel_rgb_value_bottomright[2])) / 9};
+        std::array<int32_t, 3> pixel_rgb_value_sum = {0, 0, 0};
+
+        auto idx_tr = static_cast<float>(j+1);
+        auto idx_tl = static_cast<float>(j-1);
+        auto idx_px  = (idx_tr + idx_tl) / 2.0f;
+        auto idx_t = static_cast<float>(i-1);
+        auto idx_b  = static_cast<float>(i+1);
+        auto idx_py = (idx_t + idx_b) / 2.0f;
+
+        for (size_t k=0; k<3; k++)
+        {
+          float pix_top_1 =  ((idx_tr - idx_px) / (idx_tr - idx_tl)) * static_cast<float>(pixel_rgb_value_topleft[k]);
+          float pix_top_2 =  ((idx_px - idx_tl) / (idx_tr - idx_tl)) * static_cast<float>(pixel_rgb_value_topright[k]);
+          float pix_top = (pix_top_1 + pix_top_2);
+
+          float pix_bot_1 =  ((idx_tr - idx_px) / (idx_tr - idx_tl)) * static_cast<float>(pixel_rgb_value_bottomleft[k]);
+          float pix_bot_2 =  ((idx_tr - idx_px) / (idx_tr - idx_tl)) * static_cast<float>(pixel_rgb_value_bottomright[k]);
+          float pix_bot = (pix_bot_1 + pix_bot_2);
+
+          float pix_p_1 =  ((idx_b - idx_py) / (idx_b - idx_t)) * pix_bot;
+          float pix_p_2 =  ((idx_py - idx_t) / (idx_b - idx_t)) * pix_top;
+          float pix_p = (pix_p_1 + pix_p_2);
+
+          pixel_rgb_value_sum[k] = static_cast<int32_t>(pix_p);
+        }
 
         std::array<uint8_t, 3> pixel_rgb_value = {std::clamp(static_cast<uint8_t>(pixel_rgb_value_sum[0]), uint8_t(0), uint8_t(255))
                                                  ,std::clamp(static_cast<uint8_t>(pixel_rgb_value_sum[1]), uint8_t(0), uint8_t(255))
