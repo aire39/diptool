@@ -88,7 +88,7 @@ void SpatialFilterMenu::RenderMenu()
 
   ImGui::NewLine();
 
-  if (CurrentOperation() == MenuOp_SpatialFilter::SHARPENING)
+  if (CurrentOperation() == MenuOps::SpatialFilter::SHARPENING)
   {
     ImGui::TextColored(ImVec4(0.75, 0.5, 0.9, 1.0f), "filter options:");
 
@@ -119,7 +119,7 @@ void SpatialFilterMenu::RenderMenu()
     ImGui::InputFloat("##sharp_const", &sharpenConstant, 0.1f, 1.0f, "%.3f", ImGuiInputTextFlags_::ImGuiInputTextFlags_CharsDecimal | ImGuiInputTextFlags_::ImGuiInputTextFlags_AutoSelectAll);
   }
 
-  if (CurrentOperation() == MenuOp_SpatialFilter::HIGHBOOST)
+  if (CurrentOperation() == MenuOps::SpatialFilter::HIGHBOOST)
   {
     ImGui::TextColored(ImVec4(0.75, 0.5, 0.9, 1.0f), "filter options:");
     ImGui::Text("show unsharp mask filter:");
@@ -165,24 +165,24 @@ void SpatialFilterMenu::RenderMenu()
   ImGui::End();
 }
 
-MenuOp_SpatialFilter SpatialFilterMenu::CurrentOperation()
+MenuOps::SpatialFilter SpatialFilterMenu::CurrentOperation()
 {
   switch (currentItem)
   {
     case 0:
-      operation = MenuOp_SpatialFilter::SMOOTHING;
+      operation = MenuOps::SpatialFilter::SMOOTHING;
       break;
 
     case 1:
-      operation = MenuOp_SpatialFilter::MEDIAN;
+      operation = MenuOps::SpatialFilter::MEDIAN;
       break;
 
     case 2:
-      operation = MenuOp_SpatialFilter::SHARPENING;
+      operation = MenuOps::SpatialFilter::SHARPENING;
       break;
 
     case 3:
-      operation = MenuOp_SpatialFilter::HIGHBOOST;
+      operation = MenuOps::SpatialFilter::HIGHBOOST;
       break;
 
     case 4:
@@ -218,7 +218,7 @@ MenuOp_SpatialFilter SpatialFilterMenu::CurrentOperation()
       break;
 
     default:
-      operation = MenuOp_SpatialFilter::SMOOTHING;
+      operation = MenuOps::SpatialFilter::SMOOTHING;
       break;
   }
 

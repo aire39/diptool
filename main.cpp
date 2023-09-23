@@ -13,10 +13,11 @@
 #include <spdlog/spdlog.h>
 #include <CLI/CLI.hpp>
 
-#include "CheckerBoardImage.h"
-#include "Menu.h"
+#include "utilities/CheckerBoardImage.h"
+#include "menus/Menu.h"
+#include "operations/MenuOps.h"
 
-#include "DownsampleMenu.h"
+#include "menus/DownsampleMenu.h"
 #include "operations/DownsampleOp.h"
 #include "menus/UpsampleMenu.h"
 #include "operations/UpsampleOp.h"
@@ -384,12 +385,12 @@ void RenderTask(sf::RenderWindow & window
 
         if (histogrameq_menu.IsHistogramColorTypeGray())
         {
-          histogrameq_op.SetHistogramColorType(MenuOp_HistogramColor::GRAY);
+          histogrameq_op.SetHistogramColorType(MenuOps::HistogramColor::GRAY);
         }
 
         if (histogrameq_menu.IsHistogramColorTypeRGBA())
         {
-          histogrameq_op.SetHistogramColorType(MenuOp_HistogramColor::RGBA);
+          histogrameq_op.SetHistogramColorType(MenuOps::HistogramColor::RGBA);
         }
 
         std::vector<uint8_t> source_pixels (loaded_image.getPixelsPtr(), (loaded_image.getPixelsPtr()+(loaded_image.getSize().x * loaded_image.getSize().y * 4)));
@@ -400,7 +401,7 @@ void RenderTask(sf::RenderWindow & window
         if (histogrameq_menu.IsGlobalMethodType())
         {
           process_time_begin = std::chrono::high_resolution_clock::now();
-          histogrameq_op.ProcessImage(MenuOp_HistogramMethod::GLOBAL
+          histogrameq_op.ProcessImage(MenuOps::HistogramMethod::GLOBAL
                                      ,source_pixels
                                      ,loaded_image.getSize().x
                                      ,loaded_image.getSize().y
@@ -413,7 +414,7 @@ void RenderTask(sf::RenderWindow & window
         {
           histogrameq_op.SetLocalizeKernelSize(histogrameq_menu.GetKernelX(), histogrameq_menu.GetKernelY());
           process_time_begin = std::chrono::high_resolution_clock::now();
-          histogrameq_op.ProcessImage(MenuOp_HistogramMethod::LOCALIZE
+          histogrameq_op.ProcessImage(MenuOps::HistogramMethod::LOCALIZE
                                      ,source_pixels
                                      ,loaded_image.getSize().x
                                      ,loaded_image.getSize().y
@@ -427,7 +428,7 @@ void RenderTask(sf::RenderWindow & window
           histogrameq_op.SetLocalizeKernelSize(histogrameq_menu.GetKernelX(), histogrameq_menu.GetKernelY());
           histogrameq_op.SetLocalizeKernelConstants(histogrameq_menu.GetKernelK0(), histogrameq_menu.GetKernelK1(), histogrameq_menu.GetKernelK2(), histogrameq_menu.GetKernelK3(), histogrameq_menu.GetKernelEnhanceConst());
           process_time_begin = std::chrono::high_resolution_clock::now();
-          histogrameq_op.ProcessImage(MenuOp_HistogramMethod::LOCALIZE_ENCHANCEMENT
+          histogrameq_op.ProcessImage(MenuOps::HistogramMethod::LOCALIZE_ENCHANCEMENT
                                      ,source_pixels
                                      ,loaded_image.getSize().x
                                      ,loaded_image.getSize().y
@@ -442,12 +443,12 @@ void RenderTask(sf::RenderWindow & window
         std::vector<std::map<int32_t, float>> histograms_source;
         std::vector<std::map<int32_t, float>> histograms_remap;
 
-        if (histogrameq_op.HistogramColorType() == MenuOp_HistogramColor::GRAY)
+        if (histogrameq_op.HistogramColorType() == MenuOps::HistogramColor::GRAY)
         {
           histograms_source.emplace_back(histogrameq_op.GetHistogram());
           histograms_remap.emplace_back(histogrameq_op.GetHistogramRemap());
         }
-        else // MenuOp_HistogramColor::RGBA
+        else // MenuOps::HistogramColor::RGBA
         {
           histograms_source.emplace_back(histogrameq_op.GetHistogramRed());
           histograms_remap.emplace_back(histogrameq_op.GetHistogramRemapRed());
@@ -477,7 +478,7 @@ void RenderTask(sf::RenderWindow & window
 
         spatial_op.SetKernelSize(spatial_filter_menu.GetKernelX(), spatial_filter_menu.GetKernelY());
 
-        if (spatial_filter_menu.CurrentOperation() == MenuOp_SpatialFilter::SHARPENING)
+        if (spatial_filter_menu.CurrentOperation() == MenuOps::SpatialFilter::SHARPENING)
         {
           spatial_op.SetSharpenConstant(spatial_filter_menu.GetSharpenConstant());
           spatial_op.SetSharpenUseFullKernel(spatial_filter_menu.IsSharpenFullUse());
@@ -486,7 +487,7 @@ void RenderTask(sf::RenderWindow & window
           spatial_op.InvertSharpenFilterScaling(spatial_filter_menu.InvertSharpenFilterScaling());
         }
 
-        if (spatial_filter_menu.CurrentOperation() == MenuOp_SpatialFilter::HIGHBOOST)
+        if (spatial_filter_menu.CurrentOperation() == MenuOps::SpatialFilter::HIGHBOOST)
         {
           spatial_op.SetUnSharpenConstant(spatial_filter_menu.GetUnsharpConstant());
           spatial_op.ShowUnSharpenFilter(spatial_filter_menu.ShowUnSharpenFilter());

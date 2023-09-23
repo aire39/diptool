@@ -74,7 +74,7 @@ namespace
   }
 }
 
-std::vector<uint8_t> DownsampleOp::ProcessImage(MenuOp_Downsample operation
+std::vector<uint8_t> DownsampleOp::ProcessImage(MenuOps::Downsample operation
                                                ,const std::vector<uint8_t> & source_image
                                                ,uint32_t width
                                                ,uint32_t height
@@ -83,12 +83,12 @@ std::vector<uint8_t> DownsampleOp::ProcessImage(MenuOp_Downsample operation
 {
   switch (operation)
   {
-    case MenuOp_Downsample::DECIMATE:
+    case MenuOps::Downsample::DECIMATE:
       spdlog::info("perform decimation operation");
       DecimateAlgorithm(source_image, width, height, bpp, iterations);
       break;
 
-    case MenuOp_Downsample::NEAREST:
+    case MenuOps::Downsample::NEAREST:
       spdlog::info("perform nearest operation");
       NearestAlgorithm(source_image, width, height, bpp, iterations);
       break;

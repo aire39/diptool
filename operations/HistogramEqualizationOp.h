@@ -2,6 +2,7 @@
 
 #include <map>
 #include "HistogramOp.h"
+#include "MenuOps.h"
 #include "common/cthreadpool.h"
 
 class HistogramEqualizationOp : public HistogramOp
@@ -15,16 +16,16 @@ class HistogramEqualizationOp : public HistogramOp
     [[nodiscard]] const std::map<int32_t, float> & GetHistogramRemapGreen() override;
     [[nodiscard]] const std::map<int32_t, float> & GetHistogramRemapBlue() override;
 
-    [[nodiscard]] const MenuOp_HistogramColor & HistogramColorType() const;
+    [[nodiscard]] const MenuOps::HistogramColor & HistogramColorType() const;
 
-    void SetHistogramColorType(MenuOp_HistogramColor color_type);
+    void SetHistogramColorType(MenuOps::HistogramColor color_type);
     void SetLocalizeKernelSize(int32_t x, int32_t y);
     void SetLocalizeKernelConstants(float k0, float k1, float k2, float k3, float c);
 
-    [[nodiscard]] MenuOp_HistogramMethod GetCurrentSetOperation() const;
+    [[nodiscard]] MenuOps::HistogramMethod GetCurrentSetOperation() const;
 
   protected:
-    void ProcessHistogram(MenuOp_HistogramMethod operation
+    void ProcessHistogram(MenuOps::HistogramMethod operation
                          ,const std::vector<uint8_t> & source_image
                          ,uint8_t bpp) override;
 
@@ -38,8 +39,8 @@ class HistogramEqualizationOp : public HistogramOp
     std::map<int32_t, float> remappedValuesNormalizedGreen;
     std::map<int32_t, float> remappedValuesNormalizedBlue;
 
-    MenuOp_HistogramColor inputColorType = MenuOp_HistogramColor::RGBA;
-    MenuOp_HistogramMethod histogramMethod = MenuOp_HistogramMethod::GLOBAL;
+    MenuOps::HistogramColor inputColorType = MenuOps::HistogramColor::RGBA;
+    MenuOps::HistogramMethod histogramMethod = MenuOps::HistogramMethod::GLOBAL;
 
     int32_t kernelSizeX = 3;
     int32_t kernelSizeY = 3;

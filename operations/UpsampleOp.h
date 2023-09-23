@@ -10,7 +10,7 @@ class UpsampleOp
     UpsampleOp() = default;
     ~UpsampleOp() = default;
 
-    std::vector<uint8_t> ProcessImage(MenuOp_Upsample operation
+    std::vector<uint8_t> ProcessImage(MenuOps::Upsample operation
                                      ,const std::vector<uint8_t> & source_image
                                      ,uint32_t width
                                      ,uint32_t height

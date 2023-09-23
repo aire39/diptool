@@ -10,7 +10,7 @@ class DownsampleOp
     DownsampleOp() = default;
     ~DownsampleOp() = default;
 
-    std::vector<uint8_t> ProcessImage(MenuOp_Downsample operation
+    std::vector<uint8_t> ProcessImage(MenuOps::Downsample operation
                                      ,const std::vector<uint8_t> & source_image
                                      ,uint32_t width
                                      ,uint32_t height

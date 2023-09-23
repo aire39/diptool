@@ -12,7 +12,7 @@ class HistogramOp
     HistogramOp() = default;
     ~HistogramOp() = default;
 
-    std::vector<uint8_t> ProcessImage(MenuOp_HistogramMethod operation
+    std::vector<uint8_t> ProcessImage(MenuOps::HistogramMethod operation
                                      ,const std::vector<uint8_t> & source_image
                                      ,uint32_t width
                                      ,uint32_t height
@@ -68,7 +68,7 @@ class HistogramOp
                                                             ,uint32_t width
                                                             ,uint32_t height);
 
-    virtual void ProcessHistogram(MenuOp_HistogramMethod operation
+    virtual void ProcessHistogram(MenuOps::HistogramMethod operation
                                  ,const std::vector<uint8_t> & source_image
                                  ,uint8_t bpp);
     int32_t outWidth = 0;

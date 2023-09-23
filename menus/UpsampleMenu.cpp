@@ -36,23 +36,23 @@ void UpsampleMenu::RenderMenu()
 
   ImGui::BeginGroup();
 
-  if(ImGui::RadioButton("Nearest", (operation == MenuOp_Upsample::NEAREST)))
+  if(ImGui::RadioButton("Nearest", (operation == MenuOps::Upsample::NEAREST)))
   {
-    operation = MenuOp_Upsample::NEAREST;
+    operation = MenuOps::Upsample::NEAREST;
   }
 
   ImGui::SameLine();
 
-  if (ImGui::RadioButton("Linear", (operation == MenuOp_Upsample::LINEAR)))
+  if (ImGui::RadioButton("Linear", (operation == MenuOps::Upsample::LINEAR)))
   {
-    operation = MenuOp_Upsample::LINEAR;
+    operation = MenuOps::Upsample::LINEAR;
   }
 
   ImGui::SameLine();
 
-  if (ImGui::RadioButton("Bilinear", (operation == MenuOp_Upsample::BILINEAR)))
+  if (ImGui::RadioButton("Bilinear", (operation == MenuOps::Upsample::BILINEAR)))
   {
-    operation = MenuOp_Upsample::BILINEAR;
+    operation = MenuOps::Upsample::BILINEAR;
   }
 
   ImGui::EndGroup();
@@ -63,15 +63,15 @@ void UpsampleMenu::RenderMenu()
   {
     switch (operation)
     {
-      case MenuOp_Upsample::NEAREST:
+      case MenuOps::Upsample::NEAREST:
         spdlog::info("processing image as nearest");
         break;
 
-      case MenuOp_Upsample::LINEAR:
+      case MenuOps::Upsample::LINEAR:
         spdlog::info("processing image as linear");
         break;
 
-      case MenuOp_Upsample::BILINEAR:
+      case MenuOps::Upsample::BILINEAR:
         spdlog::info("processing image as bilinear");
         break;
     }
@@ -82,7 +82,7 @@ void UpsampleMenu::RenderMenu()
   ImGui::End();
 }
 
-MenuOp_Upsample UpsampleMenu::CurrentOperation() const
+MenuOps::Upsample UpsampleMenu::CurrentOperation() const
 {
   return operation;
 }

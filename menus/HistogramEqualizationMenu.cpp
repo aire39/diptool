@@ -24,7 +24,7 @@ namespace {
   }
 }
 
-[[nodiscard]] MenuOp_HistogramMethod HistogramEqualizationMenu::CurrentOperation() const
+[[nodiscard]] MenuOps::HistogramMethod HistogramEqualizationMenu::CurrentOperation() const
 {
   return operation;
 }
@@ -117,7 +117,7 @@ void HistogramEqualizationMenu::RenderMenu()
   if(ImGui::RadioButton("Global", (setMethodType == 0)))
   {
     setMethodType = 0;
-    operation = MenuOp_HistogramMethod::GLOBAL;
+    operation = MenuOps::HistogramMethod::GLOBAL;
   }
 
   ImGui::SameLine();
@@ -125,7 +125,7 @@ void HistogramEqualizationMenu::RenderMenu()
   if (ImGui::RadioButton("Localize", (setMethodType == 1)))
   {
     setMethodType = 1;
-    operation = MenuOp_HistogramMethod::LOCALIZE;
+    operation = MenuOps::HistogramMethod::LOCALIZE;
   }
 
   ImGui::SameLine();
@@ -133,7 +133,7 @@ void HistogramEqualizationMenu::RenderMenu()
   if (ImGui::RadioButton("Localize Enhancement", (setMethodType == 2)))
   {
     setMethodType = 2;
-    operation = MenuOp_HistogramMethod::LOCALIZE_ENCHANCEMENT;
+    operation = MenuOps::HistogramMethod::LOCALIZE_ENCHANCEMENT;
   }
 
   ImGui::EndGroup();

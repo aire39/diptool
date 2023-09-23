@@ -4,7 +4,7 @@
 #include <array>
 #include <spdlog/spdlog.h>
 
-std::vector<uint8_t> SpatialFilterOp::ProcessImage(MenuOp_SpatialFilter operation
+std::vector<uint8_t> SpatialFilterOp::ProcessImage(MenuOps::SpatialFilter operation
                                                   ,const std::vector<uint8_t> & source_image
                                                   ,uint32_t width
                                                   ,uint32_t height
@@ -16,19 +16,19 @@ std::vector<uint8_t> SpatialFilterOp::ProcessImage(MenuOp_SpatialFilter operatio
 
   switch (operation)
   {
-    case MenuOp_SpatialFilter::SMOOTHING:
+    case MenuOps::SpatialFilter::SMOOTHING:
       SmoothingFilter(source_image, width, height, bpp);
       break;
 
-    case MenuOp_SpatialFilter::MEDIAN:
+    case MenuOps::SpatialFilter::MEDIAN:
       MedianFilter(source_image, width, height, bpp);
       break;
 
-    case MenuOp_SpatialFilter::SHARPENING:
+    case MenuOps::SpatialFilter::SHARPENING:
       SharpenFilter(source_image, width, height, bpp);
       break;
 
-    case MenuOp_SpatialFilter::HIGHBOOST:
+    case MenuOps::SpatialFilter::HIGHBOOST:
       HighBoostFilter(source_image, width, height, bpp);
       break;
 

@@ -130,12 +130,12 @@ include_directories(${PROJECT_SOURCE_DIR})
 
 add_executable(diptool
                main.cpp
-               CheckerBoardImage.cpp
-               CheckerBoardImage.h
-               Menu.cpp
-               Menu.h
-               DownsampleMenu.cpp
-               DownsampleMenu.h
+               utilities/CheckerBoardImage.cpp
+               utilities/CheckerBoardImage.h
+               menus/Menu.cpp
+               menus/Menu.h
+               menus/DownsampleMenu.cpp
+               menus/DownsampleMenu.h
                menus/UpsampleMenu.cpp
                menus/UpsampleMenu.h
                menus/VaryBitsMenu.cpp
