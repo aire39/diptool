@@ -74,6 +74,21 @@ namespace
   }
 }
 
+DownsampleOp::DownsampleOp()
+{
+  opType = MenuOps::OpType::DOWNSAMPLE;
+}
+
+std::vector<uint8_t> DownsampleOp::ProcessImage(MenuOps::Op op
+                                               ,const std::vector<uint8_t> & source_image
+                                               ,uint32_t width
+                                               ,uint32_t height
+                                               ,uint8_t bpp
+                                               ,uint16_t iterations)
+{
+  return {};
+}
+
 std::vector<uint8_t> DownsampleOp::ProcessImage(MenuOps::Downsample operation
                                                ,const std::vector<uint8_t> & source_image
                                                ,uint32_t width
@@ -95,21 +110,6 @@ std::vector<uint8_t> DownsampleOp::ProcessImage(MenuOps::Downsample operation
   }
 
   return result;
-}
-
-const std::vector<uint8_t> & DownsampleOp::GetImage() const
-{
-  return result;
-}
-
-int32_t DownsampleOp::GetWidth() const
-{
-  return outWidth;
-}
-
-int32_t DownsampleOp::GetHeight() const
-{
-  return outHeight;
 }
 
 void DownsampleOp::DecimateAlgorithm(const std::vector<uint8_t> & source_image

@@ -140,6 +140,11 @@ add_executable(diptool
                menus/UpsampleMenu.h
                menus/VaryBitsMenu.cpp
                menus/VaryBitsMenu.h
+               operations/MenuOps.h
+               operations/ImageOperation.cpp
+               operations/ImageOperation.h
+               operations/OperationsStack.cpp
+               operations/OperationsStack.h
                menus/HistogramEqualizationMenu.cpp
                menus/HistogramEqualizationMenu.h
                menus/SpatialFilterMenu.cpp
