@@ -27,6 +27,8 @@
 #include "operations/HistogramEqualizationOp.h"
 #include "menus/SpatialFilterMenu.h"
 #include "operations/SpatialFilterOp.h"
+#include "menus/StackMenu.h"
+#include "operations/OperationsStack.h"
 
 #define USE_ON_RESIZING true
 
@@ -243,6 +245,9 @@ void RenderTask(sf::RenderWindow & window
   SpatialFilterMenu spatial_filter_menu;
   SpatialFilterOp spatial_op;
 
+  OperationsStack op_stack;
+  StackMenu stack_menu(op_stack);
+
   Menu menu;
   menu.SetImagePath(image_file_path);
 
@@ -253,6 +258,10 @@ void RenderTask(sf::RenderWindow & window
   sf::Image processed_image_copy;
   sf::Texture processed_texture_copy;
   sf::Sprite processed_sprite_copy;
+
+  downsample_menu.SetCallback([&]() -> void {
+    op_stack.AddOperation(std::make_unique<DownsampleOp>(), downsample_op.GetOperation());
+  });
 
   while(app_is_running)
   {
@@ -529,6 +538,8 @@ void RenderTask(sf::RenderWindow & window
         spdlog::warn("output buffer was empty! no processed image to save!");
       }
     }
+
+    stack_menu.RenderMenu();
 
     // Render
     window.clear(sf::Color::Black);

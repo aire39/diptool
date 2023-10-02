@@ -1,6 +1,9 @@
 #pragma once
 
 #include <cstdint>
+#include <memory>
+
+class ImageOperation;
 
 namespace MenuOps {
 
@@ -68,5 +71,10 @@ namespace MenuOps {
     }
   };
 
+  struct OpInfo
+  {
+    std::unique_ptr<ImageOperation> operation;
+    MenuOps::Op op;
+  };
 
 }

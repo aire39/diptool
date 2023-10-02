@@ -52,6 +52,7 @@ void DownsampleMenu::RenderMenu()
 
   ImGui::NewLine();
 
+  ImGui::BeginGroup();
   if (ButtonCenteredOnLine("save image"))
   {
     switch (operation)
@@ -65,8 +66,18 @@ void DownsampleMenu::RenderMenu()
         break;
     }
 
+
+
     processBegin = true;
   }
+
+  ImGui::SameLine();
+
+  if (ButtonCenteredOnLine("add operation") && callback)
+  {
+    callback();
+  }
+  ImGui::EndGroup();
 
   ImGui::End();
 }
@@ -90,4 +101,9 @@ bool DownsampleMenu::ProcessBegin()
   }
 
   return should_process;
+}
+
+void DownsampleMenu::SetCallback(std::function<void()> cb)
+{
+  callback = cb;
 }

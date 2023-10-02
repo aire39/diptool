@@ -7,7 +7,8 @@ void OperationsStack::AddOperation(std::unique_ptr<ImageOperation> && operation,
   operations.emplace_back(std::move(operation), op);
 }
 
-std::vector<uint8_t> OperationsStack::ProcessImage(const std::vector<uint8_t> & source_image
+std::vector<uint8_t> OperationsStack::ProcessImage(MenuOps::Op select_op
+                                                  ,const std::vector<uint8_t> & source_image
                                                   ,uint32_t width
                                                   ,uint32_t height
                                                   ,uint8_t bpp
@@ -30,4 +31,9 @@ std::vector<uint8_t> OperationsStack::ProcessImage(const std::vector<uint8_t> & 
   outHeight = processed_height;
 
   return result;
+}
+
+const std::vector<MenuOps::OpInfo> & OperationsStack::GetStack() const
+{
+  return operations;
 }
