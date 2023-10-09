@@ -99,6 +99,7 @@ add_subdirectory(libs/spdlog)
 
 include_directories(${PROJECT_SOURCE_DIR}/libs)
 file(GLOB TINYDIALOG ${PROJECT_SOURCE_DIR}/libs/tinyfiledialogs/tinyfiledialogs.c ${PROJECT_SOURCE_DIR}/libs/tinyfiledialogs/tinyfiledialogs.h)
+file(GLOB IMPLOT ${PROJECT_SOURCE_DIR}/libs/implot/implot.h ${PROJECT_SOURCE_DIR}/libs/implot/implot.cpp ${PROJECT_SOURCE_DIR}/libs/implot/implot_internal.h ${PROJECT_SOURCE_DIR}/libs/implot/implot_items.cpp)
 
 ## files needed to build project
 
@@ -129,6 +130,7 @@ add_executable(diptool
                operations/HistogramEqualizationOp.cpp
                operations/HistogramEqualizationOp.h
                ${TINYDIALOG}
+               ${IMPLOT}
               )
 
 target_link_libraries(diptool

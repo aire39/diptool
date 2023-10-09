@@ -1,6 +1,7 @@
 #include "HistogramEqualizationMenu.h"
 
 #include <imgui.h>
+#include <implot/implot.h>
 #include <spdlog/spdlog.h>
 
 namespace {
@@ -32,28 +33,33 @@ void HistogramEqualizationMenu::RenderMenu()
 
   {
     std::lock_guard<decltype(histogramMtx)> lock(histogramMtx);
-    static  std::vector<float> h_values(256);
+
     float max_h_value = 0.0f;
     for (const auto & [key, value] : histogramNormalized)
     {
-      h_values[key] = value;
+      histogramSourceValues[key] = value;
       max_h_value = (max_h_value < value) ? value : max_h_value;
     }
 
-    ImGui::PlotHistogram("##ohistogram", h_values.data(), h_values.size(), 2.0f, "source histogram", 0.0f, max_h_value * 2.0f, ImVec2(256, 80));
-
-    ImGui::NewLine();
-
-    static std::vector<float> h_remap_values(256);
     float max_h_remap_value = 0.0f;
     for (const auto & [key, value] : histogramNormalizedRemap)
     {
-      h_remap_values[key] = value;
+      histogramRemapValues[key] = value;
       max_h_remap_value = (max_h_remap_value < value) ? value : max_h_remap_value;
     }
 
-    ImGui::PlotHistogram("##ohistogram_remap", h_remap_values.data(), h_remap_values.size(), 2.0f, "remapped histogram", 0.0f, max_h_remap_value * 2.0f, ImVec2(256, 80));
-    ImGui::NewLine();
+    if (ImPlot::BeginPlot("##histogram_eq", ImVec2(512, 0), ImPlotFlags_::ImPlotFlags_None))
+    {
+      ImPlot::SetupAxes("pixel values", "pixel ratio", ImPlotAxisFlags_::ImPlotAxisFlags_RangeFit | ImPlotAxisFlags_::ImPlotAxisFlags_Opposite | ImPlotAxisFlags_::ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_::ImPlotAxisFlags_RangeFit | ImPlotAxisFlags_::ImPlotAxisFlags_AutoFit);
+      ImPlot::SetupAxisLimits(ImAxis_::ImAxis_X1, 0, 255);
+      ImPlot::SetupAxisLimits(ImAxis_::ImAxis_Y1, 0, max_h_value * 2.0);
+
+      ImPlot::PlotBars("source histogram", histogramSourceValues.data(), static_cast<int32_t>(histogramSourceValues.size()), max_h_value * 2.0f, 2.0f, ImPlotBarsFlags_::ImPlotBarsFlags_None, 0);
+      ImPlot::SetNextFillStyle(ImVec4(1.f,0.75f,0.25f,1));
+      ImPlot::PlotBars("remapped histogram", histogramRemapValues.data(), static_cast<int32_t>(histogramRemapValues.size()), max_h_value * 2.0f, 2.0f, ImPlotBarsFlags_::ImPlotBarsFlags_None, 0);
+
+      ImPlot::EndPlot();
+    }
   }
 
   ImGui::BeginGroup();
