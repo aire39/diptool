@@ -3,6 +3,7 @@
 #include <string>
 #include <cstdint>
 #include <map>
+#include <vector>
 #include <mutex>
 
 #include "MenuOps.h"
@@ -25,5 +26,7 @@ class HistogramEqualizationMenu
     MenuOp_Upsample operation = MenuOp_Upsample::NEAREST;
     std::map<int32_t, float> histogramNormalized;
     std::map<int32_t, float> histogramNormalizedRemap;
+    std::vector<float> histogramSourceValues = std::vector<float>(256);
+    std::vector<float> histogramRemapValues = std::vector<float>(256);
     std::mutex histogramMtx;
 };

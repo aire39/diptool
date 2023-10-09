@@ -4,6 +4,7 @@
 
 #include <imgui.h>
 #include <imgui-SFML.h>
+#include <implot/implot.h>
 
 #include <SFML/Window.hpp>
 #include <SFML/Graphics.hpp>
@@ -135,6 +136,8 @@ int main(int argc, char*argv[])
   spdlog::info("initializing ui...");
   
   bool imgui_initialized = ImGui::SFML::Init(window);
+  ImPlot::CreateContext();
+
   if (!imgui_initialized)
   {
     spdlog::critical("failed to initialize ImGui!");
@@ -199,6 +202,7 @@ int main(int argc, char*argv[])
     }
   }
 
+  ImPlot::DestroyContext();
   ImGui::SFML::Shutdown();
 
   spdlog::info("application done!");
