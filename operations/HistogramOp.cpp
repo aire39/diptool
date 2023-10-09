@@ -117,9 +117,39 @@ const std::map<int32_t, float> & HistogramOp::GetHistogram() const
   return histogramNormalizedGray;
 }
 
+const std::map<int32_t, float> & HistogramOp::GetHistogramRed() const
+{
+  return histogramNormalizedRed;
+}
+
+const std::map<int32_t, float> & HistogramOp::GetHistogramGreen() const
+{
+  return histogramNormalizedGreen;
+}
+
+const std::map<int32_t, float> & HistogramOp::GetHistogramBlue() const
+{
+  return histogramNormalizedBlue;
+}
+
 const std::map<int32_t, float> & HistogramOp::GetHistogramRemap()
 {
-  return std::map<int32_t, float>();
+  return dummy;
+}
+
+const std::map<int32_t, float> & HistogramOp::GetHistogramRemapRed()
+{
+  return dummy;
+}
+
+const std::map<int32_t, float> & HistogramOp::GetHistogramRemapGreen()
+{
+  return dummy;
+}
+
+const std::map<int32_t, float> & HistogramOp::GetHistogramRemapBlue()
+{
+  return dummy;
 }
 
 int32_t HistogramOp::GetWidth() const

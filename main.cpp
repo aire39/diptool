@@ -367,11 +367,39 @@ void RenderTask(sf::RenderWindow & window
 
       if (histogrameq_menu.ProcessBegin())
       {
+        if (histogrameq_menu.IsHistogramColorTypeGray())
+        {
+          histogrameq_op.SetHistogramColorType(MenuOp_HistogramColor::GRAY);
+        }
+
+        if (histogrameq_menu.IsHistogramColorTypeRGBA())
+        {
+          histogrameq_op.SetHistogramColorType(MenuOp_HistogramColor::RGBA);
+        }
+
         std::vector<uint8_t> source_pixels (loaded_image.getPixelsPtr(), (loaded_image.getPixelsPtr()+(loaded_image.getSize().x * loaded_image.getSize().y * 4)));
         histogrameq_op.ProcessImage(MenuOp_Downsample::NEAREST, source_pixels, loaded_image.getSize().x, loaded_image.getSize().y, 4, 0);
 
-        histogrameq_menu.SetHistogramData(histogrameq_op.GetHistogram());
-        histogrameq_menu.SetHistogramRemapData(histogrameq_op.GetHistogramRemap());
+        std::vector<std::map<int32_t, float>> histograms_source;
+        std::vector<std::map<int32_t, float>> histograms_remap;
+
+        if (histogrameq_op.HistogramColorType() == MenuOp_HistogramColor::GRAY)
+        {
+          histograms_source.emplace_back(histogrameq_op.GetHistogram());
+          histograms_remap.emplace_back(histogrameq_op.GetHistogramRemap());
+        }
+        else // MenuOp_HistogramColor::RGBA
+        {
+          histograms_source.emplace_back(histogrameq_op.GetHistogramRed());
+          histograms_remap.emplace_back(histogrameq_op.GetHistogramRemapRed());
+          histograms_source.emplace_back(histogrameq_op.GetHistogramGreen());
+          histograms_remap.emplace_back(histogrameq_op.GetHistogramRemapGreen());
+          histograms_source.emplace_back(histogrameq_op.GetHistogramBlue());
+          histograms_remap.emplace_back(histogrameq_op.GetHistogramRemapBlue());
+        }
+
+        histogrameq_menu.SetHistogramData(histograms_source);
+        histogrameq_menu.SetHistogramRemapData(histograms_remap);
 
         const auto & result_image = histogrameq_op.GetImage();
         processed_image.create(histogrameq_op.GetWidth(), histogrameq_op.GetHeight(), result_image.data());

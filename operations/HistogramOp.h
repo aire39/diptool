@@ -20,7 +20,13 @@ class HistogramOp
 
     [[nodiscard]] const std::vector<uint8_t> & GetImage() const;
     [[nodiscard]] const std::map<int32_t, float> & GetHistogram() const;
+    [[nodiscard]] const std::map<int32_t, float> & GetHistogramRed() const;
+    [[nodiscard]] const std::map<int32_t, float> & GetHistogramGreen() const;
+    [[nodiscard]] const std::map<int32_t, float> & GetHistogramBlue() const;
     [[nodiscard]] virtual const std::map<int32_t, float> & GetHistogramRemap();
+    [[nodiscard]] virtual const std::map<int32_t, float> & GetHistogramRemapRed();
+    [[nodiscard]] virtual const std::map<int32_t, float> & GetHistogramRemapGreen();
+    [[nodiscard]] virtual const std::map<int32_t, float> & GetHistogramRemapBlue();
 
     [[nodiscard]] int32_t GetWidth() const;
     [[nodiscard]] int32_t GetHeight() const;
@@ -51,4 +57,7 @@ class HistogramOp
     static constexpr int32_t maxBppValue = 255;
 
     std::vector<uint8_t> result;
+
+  private:
+    std::map<int32_t, float> dummy;
 };
