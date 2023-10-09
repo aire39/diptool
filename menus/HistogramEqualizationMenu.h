@@ -18,15 +18,19 @@ class HistogramEqualizationMenu
     [[nodiscard]] MenuOp_Upsample CurrentOperation() const;
     bool ProcessBegin();
 
-    void SetHistogramData(const std::map<int32_t, float> & histogram_data);
-    void SetHistogramRemapData(const std::map<int32_t, float> & histogram_data);
+    void SetHistogramData(std::vector<std::map<int32_t, float>> & histogram_data);
+    void SetHistogramRemapData(std::vector<std::map<int32_t, float>> & histogram_data);
+
+    bool IsHistogramColorTypeGray() const;
+    bool IsHistogramColorTypeRGBA() const;
 
   private:
     bool processBegin = false;
     MenuOp_Upsample operation = MenuOp_Upsample::NEAREST;
-    std::map<int32_t, float> histogramNormalized;
-    std::map<int32_t, float> histogramNormalizedRemap;
-    std::vector<float> histogramSourceValues = std::vector<float>(256);
-    std::vector<float> histogramRemapValues = std::vector<float>(256);
+    std::vector<std::map<int32_t, float>> histogramNormalized;
+    std::vector<std::map<int32_t, float>> histogramNormalizedRemap;
+    std::vector<std::vector<float>> histogramSourceValues = {std::vector<float>(256), std::vector<float>(256), std::vector<float>(256)};
+    std::vector<std::vector<float>> histogramRemapValues = {std::vector<float>(256), std::vector<float>(256), std::vector<float>(256)};
+    int32_t setColorType = 0;
     std::mutex histogramMtx;
 };

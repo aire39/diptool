@@ -21,6 +21,73 @@ const std::map<int32_t, float> & HistogramEqualizationOp::GetHistogramRemap()
   return remappedValuesNormalized;
 }
 
+const std::map<int32_t, float> & HistogramEqualizationOp::GetHistogramRemapRed()
+{
+  std::map<int32_t, std::vector<int32_t>> remapped_normalize_values;
+
+  constexpr int32_t bpp = 4;
+  for (size_t i=0; i<(outWidth * outHeight); i++)
+  {
+    int32_t pixel_value = (result[0 + i * bpp]);
+    remapped_normalize_values[pixel_value].emplace_back(i);
+  }
+
+  for (const auto & [key, value] : remapped_normalize_values)
+  {
+    remappedValuesNormalizedRed[key] = static_cast<float>(value.size()) / static_cast<float>(outWidth * outHeight);
+  }
+
+  return remappedValuesNormalizedRed;
+}
+
+const std::map<int32_t, float> & HistogramEqualizationOp::GetHistogramRemapGreen()
+{
+  std::map<int32_t, std::vector<int32_t>> remapped_normalize_values;
+
+  constexpr int32_t bpp = 4;
+  for (size_t i=0; i<(outWidth * outHeight); i++)
+  {
+    int32_t pixel_value = (result[1 + i * bpp]);
+    remapped_normalize_values[pixel_value].emplace_back(i);
+  }
+
+  for (const auto & [key, value] : remapped_normalize_values)
+  {
+    remappedValuesNormalizedRed[key] = static_cast<float>(value.size()) / static_cast<float>(outWidth * outHeight);
+  }
+
+  return remappedValuesNormalizedRed;
+}
+
+const std::map<int32_t, float> & HistogramEqualizationOp::GetHistogramRemapBlue()
+{
+  std::map<int32_t, std::vector<int32_t>> remapped_normalize_values;
+
+  constexpr int32_t bpp = 4;
+  for (size_t i=0; i<(outWidth * outHeight); i++)
+  {
+    int32_t pixel_value = (result[2 + i * bpp]);
+    remapped_normalize_values[pixel_value].emplace_back(i);
+  }
+
+  for (const auto & [key, value] : remapped_normalize_values)
+  {
+    remappedValuesNormalizedRed[key] = static_cast<float>(value.size()) / static_cast<float>(outWidth * outHeight);
+  }
+
+  return remappedValuesNormalizedRed;
+}
+
+const MenuOp_HistogramColor & HistogramEqualizationOp::HistogramColorType() const
+{
+  return inputColorType;
+}
+
+void HistogramEqualizationOp::SetHistogramColorType(MenuOp_HistogramColor color_type)
+{
+  inputColorType = color_type;
+}
+
 void HistogramEqualizationOp::ProcessHistogram(MenuOp_Downsample operation
                                               ,const std::vector<uint8_t> & source_image
                                               ,uint8_t bpp)
