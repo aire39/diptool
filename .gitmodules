@@ -16,3 +16,6 @@
 [submodule "libs/tinyfiledialogs"]
 	path = libs/tinyfiledialogs
 	url = https://github.com/native-toolkit/libtinyfiledialogs.git
+[submodule "libs/implot"]
+	path = libs/implot
+	url = https://github.com/epezent/implot.git
