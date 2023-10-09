@@ -116,12 +116,18 @@ add_executable(diptool
                menus/UpsampleMenu.h
                menus/VaryBitsMenu.cpp
                menus/VaryBitsMenu.h
+               menus/HistogramEqualizationMenu.cpp
+               menus/HistogramEqualizationMenu.h
                operations/DownsampleOp.cpp
                operations/DownsampleOp.h
                operations/UpsampleOp.cpp
                operations/UpsampleOp.h
                operations/VaryBitsOp.cpp
                operations/VaryBitsOp.h
+               operations/HistogramOp.cpp
+               operations/HistogramOp.h
+               operations/HistogramEqualizationOp.cpp
+               operations/HistogramEqualizationOp.h
                ${TINYDIALOG}
               )
 

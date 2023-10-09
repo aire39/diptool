@@ -21,6 +21,8 @@
 #include "operations/UpsampleOp.h"
 #include "menus/VaryBitsMenu.h"
 #include "operations/VaryBitsOp.h"
+#include "menus/HistogramEqualizationMenu.h"
+#include "operations/HistogramEqualizationOp.h"
 
 #define USE_ON_RESIZING true
 
@@ -228,6 +230,9 @@ void RenderTask(sf::RenderWindow & window
   VaryBitsMenu varyingbits_menu;
   int32_t current_bit_level = -1;
 
+  HistogramEqualizationOp histogrameq_op;
+  HistogramEqualizationMenu histogrameq_menu;
+
   Menu menu;
   menu.SetImagePath(image_file_path);
 
@@ -349,6 +354,25 @@ void RenderTask(sf::RenderWindow & window
         {
           spdlog::warn("output buffer was empty!");
         }
+      }
+    }
+
+    if (menu.IsHistogramEqualizationSet())
+    {
+      histogrameq_menu.RenderMenu();
+
+      if (histogrameq_menu.ProcessBegin())
+      {
+        std::vector<uint8_t> source_pixels (loaded_image.getPixelsPtr(), (loaded_image.getPixelsPtr()+(loaded_image.getSize().x * loaded_image.getSize().y * 4)));
+        histogrameq_op.ProcessImage(MenuOp_Downsample::NEAREST, source_pixels, loaded_image.getSize().x, loaded_image.getSize().y, 4, 0);
+
+        histogrameq_menu.SetHistogramData(histogrameq_op.GetHistogram());
+        histogrameq_menu.SetHistogramRemapData(histogrameq_op.GetHistogramRemap());
+
+        const auto & result_image = histogrameq_op.GetImage();
+        processed_image.create(histogrameq_op.GetWidth(), histogrameq_op.GetHeight(), result_image.data());
+        processed_texture.loadFromImage(processed_image);
+        processed_sprite = sf::Sprite(processed_texture);
       }
     }
 
