@@ -23,6 +23,11 @@ class HistogramEqualizationMenu
 
     bool IsHistogramColorTypeGray() const;
     bool IsHistogramColorTypeRGBA() const;
+    bool IsGlobalMethodType() const;
+    bool IsLocalizeMethodType() const;
+
+    int32_t GetKernelX() const;
+    int32_t GetKernelY() const;
 
   private:
     bool processBegin = false;
@@ -32,5 +37,9 @@ class HistogramEqualizationMenu
     std::vector<std::vector<float>> histogramSourceValues = {std::vector<float>(256), std::vector<float>(256), std::vector<float>(256)};
     std::vector<std::vector<float>> histogramRemapValues = {std::vector<float>(256), std::vector<float>(256), std::vector<float>(256)};
     int32_t setColorType = 0;
+    int32_t setMethodType = 0;
+    int32_t localizeKernelX = 3;
+    int32_t localizeKernelY = 3;
+
     std::mutex histogramMtx;
 };

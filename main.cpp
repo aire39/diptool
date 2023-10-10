@@ -378,7 +378,27 @@ void RenderTask(sf::RenderWindow & window
         }
 
         std::vector<uint8_t> source_pixels (loaded_image.getPixelsPtr(), (loaded_image.getPixelsPtr()+(loaded_image.getSize().x * loaded_image.getSize().y * 4)));
-        histogrameq_op.ProcessImage(MenuOp_Downsample::NEAREST, source_pixels, loaded_image.getSize().x, loaded_image.getSize().y, 4, 0);
+
+        if (histogrameq_menu.IsGlobalMethodType())
+        {
+          histogrameq_op.ProcessImage(MenuOp_HistogramMethod::GLOBAL
+                                     ,source_pixels
+                                     ,loaded_image.getSize().x
+                                     ,loaded_image.getSize().y
+                                     ,4
+                                     ,0);
+        }
+
+        if (histogrameq_menu.IsLocalizeMethodType())
+        {
+          histogrameq_op.SetLocalizeKernelSize(histogrameq_menu.GetKernelX(), histogrameq_menu.GetKernelY());
+          histogrameq_op.ProcessImage(MenuOp_HistogramMethod::LOCALIZE
+                                     ,source_pixels
+                                     ,loaded_image.getSize().x
+                                     ,loaded_image.getSize().y
+                                     ,4
+                                     ,0);
+        }
 
         std::vector<std::map<int32_t, float>> histograms_source;
         std::vector<std::map<int32_t, float>> histograms_remap;

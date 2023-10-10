@@ -1,5 +1,7 @@
 #include "HistogramEqualizationMenu.h"
 
+#include <limits>
+
 #include <imgui.h>
 #include <implot/implot.h>
 #include <spdlog/spdlog.h>
@@ -108,40 +110,40 @@ void HistogramEqualizationMenu::RenderMenu()
 
   ImGui::BeginGroup();
 
-  if(ImGui::RadioButton("Global", (operation == MenuOp_Upsample::NEAREST)))
+  if(ImGui::RadioButton("Global", (setMethodType == 0)))
   {
+    spdlog::info("Global");
+    setMethodType = 0;
     operation = MenuOp_Upsample::NEAREST;
   }
 
   ImGui::SameLine();
 
-  if (ImGui::RadioButton("3x3", (operation == MenuOp_Upsample::LINEAR)))
+  if (ImGui::RadioButton("Localize", (setMethodType == 1)))
   {
+    spdlog::info("Localize");
+
+    setMethodType = 1;
     operation = MenuOp_Upsample::LINEAR;
   }
 
-  ImGui::SameLine();
-
-  if (ImGui::RadioButton("5x5", (operation == MenuOp_Upsample::BILINEAR)))
-  {
-    operation = MenuOp_Upsample::BILINEAR;
-  }
-
-  ImGui::SameLine();
-
-  if (ImGui::RadioButton("7x7", (operation == MenuOp_Upsample::BILINEAR)))
-  {
-    operation = MenuOp_Upsample::BILINEAR;
-  }
-
-  ImGui::SameLine();
-
-  if (ImGui::RadioButton("9x9", (operation == MenuOp_Upsample::BILINEAR)))
-  {
-    operation = MenuOp_Upsample::BILINEAR;
-  }
-
   ImGui::EndGroup();
+
+  if (setMethodType == 1)
+  {
+    ImGui::BeginGroup();
+
+    ImGui::InputInt("##kernel_x", &localizeKernelX, 1, 100, ImGuiInputTextFlags_::ImGuiInputTextFlags_CharsDecimal | ImGuiInputTextFlags_::ImGuiInputTextFlags_AutoSelectAll);
+    ImGui::SameLine();
+    ImGui::Text("X");
+    ImGui::SameLine();
+    ImGui::InputInt("##kernel_y", &localizeKernelY, 1, 100, ImGuiInputTextFlags_::ImGuiInputTextFlags_CharsDecimal | ImGuiInputTextFlags_::ImGuiInputTextFlags_AutoSelectAll);
+
+    localizeKernelX = std::clamp(localizeKernelX, 1, 64);
+    localizeKernelY = std::clamp(localizeKernelY, 1, 64);
+
+    ImGui::EndGroup();
+  }
 
   ImGui::NewLine();
 
@@ -198,4 +200,24 @@ bool HistogramEqualizationMenu::IsHistogramColorTypeGray() const
 bool HistogramEqualizationMenu::IsHistogramColorTypeRGBA() const
 {
   return (setColorType == 1);
+}
+
+bool HistogramEqualizationMenu::IsGlobalMethodType() const
+{
+  return (setMethodType == 0);
+}
+
+bool HistogramEqualizationMenu::IsLocalizeMethodType() const
+{
+  return (setMethodType == 1);
+}
+
+int32_t HistogramEqualizationMenu::GetKernelX() const
+{
+  return localizeKernelX;
+}
+
+int32_t HistogramEqualizationMenu::GetKernelY() const
+{
+  return localizeKernelY;
 }

@@ -6,7 +6,7 @@
 class HistogramEqualizationOp : public HistogramOp
 {
   public:
-    HistogramEqualizationOp() {inputColorType = MenuOp_HistogramColor::RGBA;};
+    HistogramEqualizationOp() = default;
     ~HistogramEqualizationOp() = default;
 
     [[nodiscard]] const std::map<int32_t, float> & GetHistogramRemap() override;
@@ -17,9 +17,10 @@ class HistogramEqualizationOp : public HistogramOp
     [[nodiscard]] const MenuOp_HistogramColor & HistogramColorType() const;
 
     void SetHistogramColorType(MenuOp_HistogramColor color_type);
+    void SetLocalizeKernelSize(int32_t x, int32_t y);
 
   protected:
-    void ProcessHistogram(MenuOp_Downsample operation
+    void ProcessHistogram(MenuOp_HistogramMethod operation
                          ,const std::vector<uint8_t> & source_image
                          ,uint8_t bpp) override;
 
@@ -36,7 +37,12 @@ class HistogramEqualizationOp : public HistogramOp
     MenuOp_HistogramColor inputColorType = MenuOp_HistogramColor::RGBA;
     MenuOp_HistogramMethod histogramMethod = MenuOp_HistogramMethod::GLOBAL;
 
-    void GlobalProcess(MenuOp_Downsample operation
-                      ,const std::vector<uint8_t> & source_image
+    int32_t kernelSizeX = 3;
+    int32_t kernelSizeY = 3;
+
+    void GlobalProcess(const std::vector<uint8_t> & source_image
                       ,uint8_t bpp);
+
+    void LocalizeProcess(const std::vector<uint8_t> & source_image
+                        ,uint8_t bpp);
 };
