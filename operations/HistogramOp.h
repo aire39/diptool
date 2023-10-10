@@ -3,6 +3,7 @@
 #include <map>
 #include <vector>
 #include <cstdint>
+#include <tuple>
 #include "MenuOps.h"
 
 class HistogramOp
@@ -11,7 +12,7 @@ class HistogramOp
     HistogramOp() = default;
     ~HistogramOp() = default;
 
-    std::vector<uint8_t> ProcessImage(MenuOp_Downsample operation
+    std::vector<uint8_t> ProcessImage(MenuOp_HistogramMethod operation
                                      ,const std::vector<uint8_t> & source_image
                                      ,uint32_t width
                                      ,uint32_t height
@@ -32,7 +33,19 @@ class HistogramOp
     [[nodiscard]] int32_t GetHeight() const;
 
   protected:
-    virtual void ProcessHistogram(MenuOp_Downsample operation
+
+    std::tuple<std::map<int32_t, std::vector<int32_t>>, int32_t, int32_t> CollectPixelValues(const std::vector<uint8_t> & source_image
+                                                                                            ,uint32_t width
+                                                                                            ,uint32_t height
+                                                                                            ,int32_t offset
+                                                                                            ,int32_t sum_count
+                                                                                            ,int32_t bpp);
+
+    std::map<int32_t, float> NormalizeHistogramValues(const std::map<int32_t, std::vector<int32_t>> & histogram
+                                                     ,uint32_t width
+                                                     ,uint32_t height);
+
+    virtual void ProcessHistogram(MenuOp_HistogramMethod operation
                                  ,const std::vector<uint8_t> & source_image
                                  ,uint8_t bpp);
     int32_t outWidth = 0;

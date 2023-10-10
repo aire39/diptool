@@ -1,7 +1,9 @@
 #include "HistogramOp.h"
 
+#include <algorithm>
+
 std::vector<uint8_t> HistogramOp::ProcessImage
-  (MenuOp_Downsample operation
+  (MenuOp_HistogramMethod operation
   ,const std::vector<uint8_t> & source_image
   ,uint32_t width
   ,uint32_t height
@@ -32,75 +34,19 @@ std::vector<uint8_t> HistogramOp::ProcessImage
   minPixelValueBlue = source_image[2];
   maxPixelValueBlue = source_image[2];
 
-  for (size_t i=0; i<(width*height); i++)
-  {
-    int32_t pixel_value_gray = (source_image[0 + i*bpp] + source_image[1 + i*bpp] + source_image[2 + i*bpp]) / 3;
-    int32_t pixel_value_red = source_image[0 + i*bpp];
-    int32_t pixel_value_green = source_image[1 + i*bpp];
-    int32_t pixel_value_blue = source_image[2 + i*bpp];
+  // generate histogram map for each rgb channel and a gray channel
 
-    histogramPixelValuesGray[pixel_value_gray].push_back(i);
-    histogramPixelValuesRed[pixel_value_red].push_back(i);
-    histogramPixelValuesGreen[pixel_value_green].push_back(i);
-    histogramPixelValuesBlue[pixel_value_blue].push_back(i);
+  std::tie(histogramPixelValuesGray, minPixelValueGray, maxPixelValueGray) = CollectPixelValues(source_image, width, height, 0, 3, bpp);
+  std::tie(histogramPixelValuesRed, minPixelValueRed, maxPixelValueRed) = CollectPixelValues(source_image, width, height, 0, 0, bpp);
+  std::tie(histogramPixelValuesGreen, minPixelValueGreen, maxPixelValueGreen) = CollectPixelValues(source_image, width, height, 1, 0, bpp);
+  std::tie(histogramPixelValuesBlue, minPixelValueBlue, maxPixelValueBlue) = CollectPixelValues(source_image, width, height, 2, 0, bpp);
 
-    maxPixelValueGray = (maxPixelValueGray < pixel_value_gray) ? pixel_value_gray : maxPixelValueGray;
-    maxPixelValueRed = (maxPixelValueRed < pixel_value_red) ? pixel_value_red : maxPixelValueRed;
-    maxPixelValueGreen = (maxPixelValueGreen < pixel_value_green) ? pixel_value_green : maxPixelValueGreen;
-    maxPixelValueBlue = (maxPixelValueBlue < pixel_value_blue) ? pixel_value_blue : maxPixelValueBlue;
+  // create a ratio that is normalized based on the number of pixels for each intensity over the total amount of pixels
 
-    minPixelValueGray = (minPixelValueGray > pixel_value_gray) ? pixel_value_gray : minPixelValueGray;
-    minPixelValueRed = (minPixelValueRed > pixel_value_red) ? pixel_value_red : minPixelValueRed;
-    minPixelValueGreen = (minPixelValueGreen > pixel_value_green) ? pixel_value_green : minPixelValueGreen;
-    minPixelValueBlue = (minPixelValueBlue > pixel_value_blue) ? pixel_value_blue : minPixelValueBlue;
-
-  }
-
-  volatile int nnn = 0;
-  for (const auto & [pixel_value, pixel_indices] : histogramPixelValuesGray)
-  {
-    nnn += static_cast<int32_t>(pixel_indices.size());
-    auto n_colors = static_cast<float>(pixel_indices.size());
-    histogramNormalizedGray[pixel_value] = n_colors;
-  }
-  for (const auto & [pixel_value, pixel_indices] : histogramPixelValuesGray)
-  {
-    histogramNormalizedGray[pixel_value] /= static_cast<float>(nnn);
-  }
-
-  nnn = 0;
-  for (const auto & [pixel_value, pixel_indices] : histogramPixelValuesRed)
-  {
-    nnn += static_cast<int32_t>(pixel_indices.size());
-    auto n_colors = static_cast<float>(pixel_indices.size());
-    histogramNormalizedRed[pixel_value] = n_colors;
-  }
-  for (const auto & [pixel_value, pixel_indices] : histogramPixelValuesRed)
-  {
-    histogramNormalizedRed[pixel_value] /= static_cast<float>(nnn);
-  }
-
-  nnn = 0;
-  for (const auto & [pixel_value, pixel_indices] : histogramPixelValuesGreen)
-  {
-    nnn += static_cast<int32_t>(pixel_indices.size());
-    histogramNormalizedGreen[pixel_value] = static_cast<float>(pixel_indices.size());
-  }
-  for (const auto & [pixel_value, pixel_indices] : histogramPixelValuesGreen)
-  {
-    histogramNormalizedGreen[pixel_value] /= static_cast<float>(nnn);
-  }
-
-  nnn = 0;
-  for (const auto & [pixel_value, pixel_indices] : histogramPixelValuesBlue)
-  {
-    nnn += static_cast<int32_t>(pixel_indices.size());
-    histogramNormalizedBlue[pixel_value] = static_cast<float>(pixel_indices.size());
-  }
-  for (const auto & [pixel_value, pixel_indices] : histogramPixelValuesBlue)
-  {
-    histogramNormalizedBlue[pixel_value] /= static_cast<float>(nnn);
-  }
+  histogramNormalizedGray = NormalizeHistogramValues(histogramPixelValuesGray, width, height);
+  histogramNormalizedRed = NormalizeHistogramValues(histogramPixelValuesRed, width, height);
+  histogramNormalizedGreen = NormalizeHistogramValues(histogramPixelValuesGreen, width, height);
+  histogramNormalizedBlue = NormalizeHistogramValues(histogramPixelValuesBlue, width, height);
 
   ProcessHistogram(operation, source_image, bpp);
 
@@ -162,7 +108,62 @@ int32_t HistogramOp::GetHeight() const
   return outHeight;
 }
 
-void HistogramOp::ProcessHistogram(MenuOp_Downsample operation
+std::tuple<std::map<int32_t, std::vector<int32_t>>, int32_t, int32_t> HistogramOp::CollectPixelValues(const std::vector<uint8_t> & source_image, uint32_t width, uint32_t  height, int32_t offset, int32_t sum_count, int32_t bpp)
+{
+  // generate histogram map based on the input image source. the function can specify the channel offset and
+  // if an accumulation of channels needs to be done (sum_count)
+
+  std::map<int32_t, std::vector<int32_t>> pixel_collection;
+  int32_t min_pixel_value = 0;
+  int32_t max_pixel_value = 0;
+
+  offset = std::clamp(offset, 0, (bpp-1));
+  sum_count = std::clamp(sum_count, 0, bpp);
+  sum_count = std::max(0, sum_count - offset);
+
+  for (size_t i=0; i<(width*height); i++)
+  {
+    int32_t pixel_value = 0;
+    if (sum_count > 1)
+    {
+      for (size_t j=0; j<sum_count; j++)
+      {
+        pixel_value += source_image[(offset + j) + (i * bpp)];
+      }
+      pixel_value /= sum_count;
+    }
+    else
+    {
+      pixel_value = source_image[offset + (i * bpp)];
+    }
+
+    pixel_collection[pixel_value].emplace_back(i);
+
+
+    min_pixel_value = (min_pixel_value > pixel_value) ? pixel_value : min_pixel_value;
+    max_pixel_value = (max_pixel_value < pixel_value) ? pixel_value : max_pixel_value;
+  }
+
+  return {pixel_collection, min_pixel_value, max_pixel_value};
+}
+
+std::map<int32_t, float> HistogramOp::NormalizeHistogramValues(const std::map<int32_t, std::vector<int32_t>> & histogram
+                                                              ,uint32_t width
+                                                              ,uint32_t height)
+{
+  // create a ratio that is normalized based on the number of pixels for each intensity over the total amount of pixels
+
+  std::map<int32_t, float> normalized_histogram;
+
+  for (const auto & [pixel_value, pixel_indices] : histogram)
+  {
+    normalized_histogram[pixel_value] = static_cast<float>(pixel_indices.size()) / static_cast<float>(width*height);
+  }
+
+  return normalized_histogram;
+}
+
+void HistogramOp::ProcessHistogram(MenuOp_HistogramMethod operation
                                   ,const std::vector<uint8_t> & source_image
                                   ,uint8_t bpp)
 {
