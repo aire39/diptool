@@ -409,7 +409,21 @@ void RenderTask(sf::RenderWindow & window
           process_time_end = std::chrono::high_resolution_clock::now();
         }
 
-        float process_time_secs = static_cast<float>(std::chrono::duration_cast<std::chrono::microseconds>(process_time_end - process_time_begin).count() / 1e6f);
+        if (histogrameq_menu.IsLocalizeEnchancementMethodType())
+        {
+          histogrameq_op.SetLocalizeKernelSize(histogrameq_menu.GetKernelX(), histogrameq_menu.GetKernelY());
+          histogrameq_op.SetLocalizeKernelConstants(histogrameq_menu.GetKernelK0(), histogrameq_menu.GetKernelK1());
+          process_time_begin = std::chrono::high_resolution_clock::now();
+          histogrameq_op.ProcessImage(MenuOp_HistogramMethod::LOCALIZE_ENCHANCEMENT
+                                     ,source_pixels
+                                     ,loaded_image.getSize().x
+                                     ,loaded_image.getSize().y
+                                     ,4
+                                     ,0);
+          process_time_end = std::chrono::high_resolution_clock::now();
+        }
+
+        float process_time_secs = static_cast<float>(std::chrono::duration_cast<std::chrono::microseconds>(process_time_end - process_time_begin).count()) / 1e6f;
         histogrameq_menu.SetProcessTime(process_time_secs);
 
         std::vector<std::map<int32_t, float>> histograms_source;

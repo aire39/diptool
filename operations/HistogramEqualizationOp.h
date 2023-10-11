@@ -19,6 +19,7 @@ class HistogramEqualizationOp : public HistogramOp
 
     void SetHistogramColorType(MenuOp_HistogramColor color_type);
     void SetLocalizeKernelSize(int32_t x, int32_t y);
+    void SetLocalizeKernelConstants(float k0, float k1);
 
   protected:
     void ProcessHistogram(MenuOp_HistogramMethod operation
@@ -40,6 +41,8 @@ class HistogramEqualizationOp : public HistogramOp
 
     int32_t kernelSizeX = 3;
     int32_t kernelSizeY = 3;
+    float kernelK0 = 0.25f;
+    float kernelK1 = 0.75f;
 
     cthreadpool workPool;
 

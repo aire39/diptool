@@ -24,9 +24,9 @@ namespace {
   }
 }
 
-[[nodiscard]] MenuOp_Upsample HistogramEqualizationMenu::CurrentOperation() const
+[[nodiscard]] MenuOp_HistogramMethod HistogramEqualizationMenu::CurrentOperation() const
 {
-  return MenuOp_Upsample::LINEAR;
+  return operation;
 }
 
 void HistogramEqualizationMenu::RenderMenu()
@@ -116,19 +116,24 @@ void HistogramEqualizationMenu::RenderMenu()
 
   if(ImGui::RadioButton("Global", (setMethodType == 0)))
   {
-    spdlog::info("Global");
     setMethodType = 0;
-    operation = MenuOp_Upsample::NEAREST;
+    operation = MenuOp_HistogramMethod::GLOBAL;
   }
 
   ImGui::SameLine();
 
   if (ImGui::RadioButton("Localize", (setMethodType == 1)))
   {
-    spdlog::info("Localize");
-
     setMethodType = 1;
-    operation = MenuOp_Upsample::LINEAR;
+    operation = MenuOp_HistogramMethod::LOCALIZE;
+  }
+
+  ImGui::SameLine();
+
+  if (ImGui::RadioButton("Localize Enhancement", (setMethodType == 2)))
+  {
+    setMethodType = 2;
+    operation = MenuOp_HistogramMethod::LOCALIZE_ENCHANCEMENT;
   }
 
   ImGui::EndGroup();
@@ -143,11 +148,29 @@ void HistogramEqualizationMenu::RenderMenu()
     ImGui::SameLine();
     ImGui::InputInt("##kernel_y", &localizeKernelY, 1, 100, ImGuiInputTextFlags_::ImGuiInputTextFlags_CharsDecimal | ImGuiInputTextFlags_::ImGuiInputTextFlags_AutoSelectAll);
 
-    localizeKernelX = std::clamp(localizeKernelX, 1, 512);
-    localizeKernelY = std::clamp(localizeKernelY, 1, 512);
+    ImGui::EndGroup();
+  }
+
+  if (setMethodType == 2)
+  {
+    ImGui::BeginGroup();
+
+    ImGui::InputInt("##kernel_x_2", &localizeKernelX, 1, 100, ImGuiInputTextFlags_::ImGuiInputTextFlags_CharsDecimal | ImGuiInputTextFlags_::ImGuiInputTextFlags_AutoSelectAll);
+    ImGui::SameLine();
+    ImGui::Text("X");
+    ImGui::SameLine();
+    ImGui::InputInt("##kernel_y_2", &localizeKernelY, 1, 100, ImGuiInputTextFlags_::ImGuiInputTextFlags_CharsDecimal | ImGuiInputTextFlags_::ImGuiInputTextFlags_AutoSelectAll);
+
+    ImGui::NewLine();
+
+    ImGui::InputFloat("K_0", &localizeKernelK0, 0.01f, 0.1f, "%.3f", ImGuiInputTextFlags_::ImGuiInputTextFlags_CharsDecimal | ImGuiInputTextFlags_::ImGuiInputTextFlags_AutoSelectAll);
+    ImGui::InputFloat("K_1", &localizeKernelK1, 0.01f, 0.1f, "%.3f", ImGuiInputTextFlags_::ImGuiInputTextFlags_CharsDecimal | ImGuiInputTextFlags_::ImGuiInputTextFlags_AutoSelectAll);
 
     ImGui::EndGroup();
   }
+
+  localizeKernelX = std::clamp(localizeKernelX, 1, 512);
+  localizeKernelY = std::clamp(localizeKernelY, 1, 512);
 
   ImGui::NewLine();
 
@@ -221,6 +244,11 @@ bool HistogramEqualizationMenu::IsLocalizeMethodType() const
   return (setMethodType == 1);
 }
 
+bool HistogramEqualizationMenu::IsLocalizeEnchancementMethodType() const
+{
+  return (setMethodType == 2);
+}
+
 int32_t HistogramEqualizationMenu::GetKernelX() const
 {
   return localizeKernelX;
@@ -229,6 +257,16 @@ int32_t HistogramEqualizationMenu::GetKernelX() const
 int32_t HistogramEqualizationMenu::GetKernelY() const
 {
   return localizeKernelY;
+}
+
+float HistogramEqualizationMenu::GetKernelK0() const
+{
+  return localizeKernelK0;
+}
+
+float HistogramEqualizationMenu::GetKernelK1() const
+{
+  return localizeKernelK1;
 }
 
 void HistogramEqualizationMenu::ClearData()
