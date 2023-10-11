@@ -2,11 +2,12 @@
 
 #include <map>
 #include "HistogramOp.h"
+#include "common/cthreadpool.h"
 
 class HistogramEqualizationOp : public HistogramOp
 {
   public:
-    HistogramEqualizationOp() = default;
+    HistogramEqualizationOp();
     ~HistogramEqualizationOp() = default;
 
     [[nodiscard]] const std::map<int32_t, float> & GetHistogramRemap() override;
@@ -39,6 +40,8 @@ class HistogramEqualizationOp : public HistogramOp
 
     int32_t kernelSizeX = 3;
     int32_t kernelSizeY = 3;
+
+    cthreadpool workPool;
 
     void GlobalProcess(const std::vector<uint8_t> & source_image
                       ,uint8_t bpp);

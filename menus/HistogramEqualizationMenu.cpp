@@ -106,6 +106,10 @@ void HistogramEqualizationMenu::RenderMenu()
 
   ImGui::NewLine();
 
+  ImGui::Text(("Process Time: " + std::to_string(processTimeSecs) + " secs").c_str());
+
+  ImGui::NewLine();
+
   ImGui::Text("Set Method Type:");
 
   ImGui::BeginGroup();
@@ -139,8 +143,8 @@ void HistogramEqualizationMenu::RenderMenu()
     ImGui::SameLine();
     ImGui::InputInt("##kernel_y", &localizeKernelY, 1, 100, ImGuiInputTextFlags_::ImGuiInputTextFlags_CharsDecimal | ImGuiInputTextFlags_::ImGuiInputTextFlags_AutoSelectAll);
 
-    localizeKernelX = std::clamp(localizeKernelX, 1, 64);
-    localizeKernelY = std::clamp(localizeKernelY, 1, 64);
+    localizeKernelX = std::clamp(localizeKernelX, 1, 512);
+    localizeKernelY = std::clamp(localizeKernelY, 1, 512);
 
     ImGui::EndGroup();
   }
@@ -192,6 +196,11 @@ void HistogramEqualizationMenu::SetHistogramRemapData(std::vector<std::map<int32
   histogramNormalizedRemap = histogram_data;
 }
 
+void HistogramEqualizationMenu::SetProcessTime(float process_time)
+{
+  processTimeSecs = process_time;
+}
+
 bool HistogramEqualizationMenu::IsHistogramColorTypeGray() const
 {
   return (setColorType == 0);
@@ -220,4 +229,12 @@ int32_t HistogramEqualizationMenu::GetKernelX() const
 int32_t HistogramEqualizationMenu::GetKernelY() const
 {
   return localizeKernelY;
+}
+
+void HistogramEqualizationMenu::ClearData()
+{
+  histogramNormalized.clear();
+  histogramNormalizedRemap.clear();
+  histogramSourceValues = {std::vector<float>(256), std::vector<float>(256), std::vector<float>(256)};
+  histogramRemapValues = {std::vector<float>(256), std::vector<float>(256), std::vector<float>(256)};
 }

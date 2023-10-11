@@ -34,16 +34,27 @@ class HistogramOp
 
   protected:
 
-    std::tuple<std::map<int32_t, std::vector<int32_t>>, int32_t, int32_t> CollectPixelValues(const std::vector<uint8_t> & source_image
+    static std::tuple<std::map<int32_t, std::vector<int32_t>>, int32_t, int32_t> CollectPixelValues(const std::vector<uint8_t> & source_image
                                                                                             ,uint32_t width
                                                                                             ,uint32_t height
                                                                                             ,int32_t offset
                                                                                             ,int32_t sum_count
                                                                                             ,int32_t bpp);
 
-    std::map<int32_t, float> NormalizeHistogramValues(const std::map<int32_t, std::vector<int32_t>> & histogram
-                                                     ,uint32_t width
-                                                     ,uint32_t height);
+    static std::tuple<std::map<int32_t, std::vector<int32_t>>, int32_t, int32_t> CollectPixelValues(const std::vector<uint8_t> & source_image
+                                                                                                   ,uint32_t width
+                                                                                                   ,uint32_t height
+                                                                                                   ,int32_t x_pos_start
+                                                                                                   ,int32_t y_pos_start
+                                                                                                   ,int32_t x_pos_end
+                                                                                                   ,int32_t y_pos_end
+                                                                                                   ,int32_t offset
+                                                                                                   ,int32_t sum_count
+                                                                                                   ,int32_t bpp);
+
+    static std::map<int32_t, float> NormalizeHistogramValues(const std::map<int32_t, std::vector<int32_t>> & histogram
+                                                            ,uint32_t width
+                                                            ,uint32_t height);
 
     virtual void ProcessHistogram(MenuOp_HistogramMethod operation
                                  ,const std::vector<uint8_t> & source_image
