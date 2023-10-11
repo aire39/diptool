@@ -367,6 +367,8 @@ void RenderTask(sf::RenderWindow & window
 
       if (histogrameq_menu.ProcessBegin())
       {
+        histogrameq_menu.ClearData();
+
         if (histogrameq_menu.IsHistogramColorTypeGray())
         {
           histogrameq_op.SetHistogramColorType(MenuOp_HistogramColor::GRAY);
@@ -379,26 +381,36 @@ void RenderTask(sf::RenderWindow & window
 
         std::vector<uint8_t> source_pixels (loaded_image.getPixelsPtr(), (loaded_image.getPixelsPtr()+(loaded_image.getSize().x * loaded_image.getSize().y * 4)));
 
+        std::chrono::high_resolution_clock::time_point process_time_begin;
+        std::chrono::high_resolution_clock::time_point process_time_end;
+
         if (histogrameq_menu.IsGlobalMethodType())
         {
+          process_time_begin = std::chrono::high_resolution_clock::now();
           histogrameq_op.ProcessImage(MenuOp_HistogramMethod::GLOBAL
                                      ,source_pixels
                                      ,loaded_image.getSize().x
                                      ,loaded_image.getSize().y
                                      ,4
                                      ,0);
+          process_time_end = std::chrono::high_resolution_clock::now();
         }
 
         if (histogrameq_menu.IsLocalizeMethodType())
         {
           histogrameq_op.SetLocalizeKernelSize(histogrameq_menu.GetKernelX(), histogrameq_menu.GetKernelY());
+          process_time_begin = std::chrono::high_resolution_clock::now();
           histogrameq_op.ProcessImage(MenuOp_HistogramMethod::LOCALIZE
                                      ,source_pixels
                                      ,loaded_image.getSize().x
                                      ,loaded_image.getSize().y
                                      ,4
                                      ,0);
+          process_time_end = std::chrono::high_resolution_clock::now();
         }
+
+        float process_time_secs = static_cast<float>(std::chrono::duration_cast<std::chrono::microseconds>(process_time_end - process_time_begin).count() / 1e6f);
+        histogrameq_menu.SetProcessTime(process_time_secs);
 
         std::vector<std::map<int32_t, float>> histograms_source;
         std::vector<std::map<int32_t, float>> histograms_remap;

@@ -1,5 +1,6 @@
 #include "HistogramOp.h"
 
+#include <limits>
 #include <algorithm>
 
 std::vector<uint8_t> HistogramOp::ProcessImage
@@ -108,10 +109,47 @@ int32_t HistogramOp::GetHeight() const
   return outHeight;
 }
 
-std::tuple<std::map<int32_t, std::vector<int32_t>>, int32_t, int32_t> HistogramOp::CollectPixelValues(const std::vector<uint8_t> & source_image, uint32_t width, uint32_t  height, int32_t offset, int32_t sum_count, int32_t bpp)
+std::tuple<std::map<int32_t, std::vector<int32_t>>, int32_t, int32_t> HistogramOp::CollectPixelValues
+  (const std::vector<uint8_t> & source_image
+  ,uint32_t width
+  ,uint32_t height
+  ,int32_t offset
+  ,int32_t sum_count
+  ,int32_t bpp)
 {
-  // generate histogram map based on the input image source. the function can specify the channel offset and
+  // generate histogram map based on the input image source over the whole image. the function can specify the channel offset and
   // if an accumulation of channels needs to be done (sum_count)
+
+  constexpr int32_t x_pos_start = 0;
+  constexpr int32_t y_pos_start = 0;
+
+  return CollectPixelValues(source_image
+                           ,width
+                           ,height
+                           ,x_pos_start
+                           ,y_pos_start
+                           ,static_cast<int32_t>(width)
+                           ,static_cast<int32_t>(height)
+                           ,offset
+                           ,sum_count
+                           ,bpp);
+}
+
+std::tuple<std::map<int32_t, std::vector<int32_t>>, int32_t, int32_t> HistogramOp::CollectPixelValues
+  (const std::vector<uint8_t> & source_image
+  ,uint32_t width
+  ,uint32_t height
+  ,int32_t x_pos_start
+  ,int32_t y_pos_start
+  ,int32_t x_pos_end
+  ,int32_t y_pos_end
+  ,int32_t offset
+  ,int32_t sum_count
+  ,int32_t bpp
+  )
+{
+  // generate histogram map based on the input image source. this can be done over a region of the source image.
+  // the function can specify the channel offset and if an accumulation of channels needs to be done (sum_count).
 
   std::map<int32_t, std::vector<int32_t>> pixel_collection;
   int32_t min_pixel_value = 0;
@@ -121,27 +159,35 @@ std::tuple<std::map<int32_t, std::vector<int32_t>>, int32_t, int32_t> HistogramO
   sum_count = std::clamp(sum_count, 0, bpp);
   sum_count = std::max(0, sum_count - offset);
 
-  for (size_t i=0; i<(width*height); i++)
+  y_pos_end = std::clamp(y_pos_end, 0, static_cast<int32_t>(height));
+  x_pos_end = std::clamp(x_pos_end, 0, static_cast<int32_t>(width));
+
+  for (int32_t i=y_pos_start; i<y_pos_end; i++)
   {
-    int32_t pixel_value = 0;
-    if (sum_count > 1)
+    for(int32_t j=x_pos_start; j<x_pos_end; j++)
     {
-      for (size_t j=0; j<sum_count; j++)
+      int32_t ii = std::clamp(i, static_cast<int32_t>(0), static_cast<int32_t>(width)-1);
+      int32_t jj = std::clamp(j, static_cast<int32_t>(0), static_cast<int32_t>(height)-1);
+      int32_t pixel_value = 0;
+      if (sum_count > 1)
       {
-        pixel_value += source_image[(offset + j) + (i * bpp)];
+        for (size_t k = 0; k < sum_count; k++)
+        {
+          pixel_value += source_image[(offset + k + (jj * bpp)) + (ii * width * bpp)];
+        }
+        pixel_value /= sum_count;
       }
-      pixel_value /= sum_count;
+      else
+      {
+        pixel_value = source_image[(offset + (jj * bpp)) + (ii * width * bpp)];
+      }
+
+      pixel_collection[pixel_value].emplace_back(((jj * bpp) + (ii * width * bpp)));
+
+
+      min_pixel_value = (min_pixel_value > pixel_value) ? pixel_value : min_pixel_value;
+      max_pixel_value = (max_pixel_value < pixel_value) ? pixel_value : max_pixel_value;
     }
-    else
-    {
-      pixel_value = source_image[offset + (i * bpp)];
-    }
-
-    pixel_collection[pixel_value].emplace_back(i);
-
-
-    min_pixel_value = (min_pixel_value > pixel_value) ? pixel_value : min_pixel_value;
-    max_pixel_value = (max_pixel_value < pixel_value) ? pixel_value : max_pixel_value;
   }
 
   return {pixel_collection, min_pixel_value, max_pixel_value};
@@ -167,5 +213,4 @@ void HistogramOp::ProcessHistogram(MenuOp_HistogramMethod operation
                                   ,const std::vector<uint8_t> & source_image
                                   ,uint8_t bpp)
 {
-
 }

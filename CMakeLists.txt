@@ -5,8 +5,10 @@ project(diptool)
 
 if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
 	set(use_build_type "debug")
+    add_compile_options(-ggdb -O0)
 else ()
 	set(use_build_type "release")
+    add_compile_options(-ggdb -O3)
 endif ()
 
 ## compiler standard and other settings
@@ -100,6 +102,7 @@ add_subdirectory(libs/spdlog)
 include_directories(${PROJECT_SOURCE_DIR}/libs)
 file(GLOB TINYDIALOG ${PROJECT_SOURCE_DIR}/libs/tinyfiledialogs/tinyfiledialogs.c ${PROJECT_SOURCE_DIR}/libs/tinyfiledialogs/tinyfiledialogs.h)
 file(GLOB IMPLOT ${PROJECT_SOURCE_DIR}/libs/implot/implot.h ${PROJECT_SOURCE_DIR}/libs/implot/implot.cpp ${PROJECT_SOURCE_DIR}/libs/implot/implot_internal.h ${PROJECT_SOURCE_DIR}/libs/implot/implot_items.cpp)
+file(GLOB COMMON ${PROJECT_SOURCE_DIR}/common/*)
 
 ## files needed to build project
 
@@ -131,6 +134,7 @@ add_executable(diptool
                operations/HistogramEqualizationOp.h
                ${TINYDIALOG}
                ${IMPLOT}
+               ${COMMON}
               )
 
 target_link_libraries(diptool
