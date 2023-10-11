@@ -101,6 +101,12 @@ void HistogramEqualizationOp::SetLocalizeKernelSize(int32_t x, int32_t y)
   kernelSizeY = y;
 }
 
+void HistogramEqualizationOp::SetLocalizeKernelConstants(float k0, float k1)
+{
+  kernelK0 = k0;
+  kernelK1 = k1;
+}
+
 void HistogramEqualizationOp::ProcessHistogram(MenuOp_HistogramMethod operation
                                               ,const std::vector<uint8_t> & source_image
                                               ,uint8_t bpp)
@@ -122,6 +128,11 @@ void HistogramEqualizationOp::ProcessHistogram(MenuOp_HistogramMethod operation
 
     case MenuOp_HistogramMethod::LOCALIZE:
       LocalizeProcess(source_image, bpp);
+      break;
+
+    case MenuOp_HistogramMethod::LOCALIZE_ENCHANCEMENT:
+      spdlog::warn("no implementation for localize enhancement");
+      result = source_image;
       break;
 
     default:
@@ -275,7 +286,7 @@ void HistogramEqualizationOp::LocalizeProcess(const std::vector<uint8_t> & sourc
 
   if (inputColorType == MenuOp_HistogramColor::GRAY)
   {
-    for (size_t i=0; i<(outWidth*outHeight); i++)
+    for (size_t i=0; i<(outWidth * outHeight); i++)
     {
       int32_t gray_value = (source_image[0 + i * bpp] + source_image[1 + i * bpp] + source_image[2 + i * bpp]) / 3;
       result[0 + i * bpp] = kernel_histogram_remap[i][gray_value];

@@ -21,4 +21,5 @@ enum class MenuOp_HistogramColor : uint16_t {
 enum class MenuOp_HistogramMethod : uint16_t {
   GLOBAL = 0,
   LOCALIZE,
+  LOCALIZE_ENCHANCEMENT
 };
