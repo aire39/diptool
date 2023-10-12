@@ -2,6 +2,7 @@
 
 #include <limits>
 #include <algorithm>
+#include <cmath>
 
 std::vector<uint8_t> HistogramOp::ProcessImage
   (MenuOp_HistogramMethod operation
@@ -191,6 +192,45 @@ std::tuple<std::map<int32_t, std::vector<int32_t>>, int32_t, int32_t> HistogramO
   }
 
   return {pixel_collection, min_pixel_value, max_pixel_value};
+}
+
+float HistogramOp::HistogramMean(const std::map<int32_t, float> & normalized_pixel_probability_map)
+{
+  float mean = 0.0f;
+
+  for (const auto & [pixel_value, probability] : normalized_pixel_probability_map)
+  {
+    mean += (static_cast<float>(pixel_value) * probability);
+  }
+
+  return mean;
+
+}
+
+float HistogramOp::HistogramVariance(const std::map<int32_t, float> & normalized_pixel_probability_map
+                                    ,float mean)
+{
+  return HistogramNthMoment(normalized_pixel_probability_map, mean, 2);
+}
+
+float HistogramOp::HistogramStandardDeviation(const std::map<int32_t, float> & normalized_pixel_probability_map
+                                             ,float mean)
+{
+  return std::sqrt(HistogramVariance(normalized_pixel_probability_map, mean));
+}
+
+float HistogramOp::HistogramNthMoment(const std::map<int32_t, float> & normalized_pixel_probability_map
+                                     ,float mean
+                                     ,int32_t root)
+{
+  float moment = 0.0f;
+
+  for (const auto & [pixel_value, probability] : normalized_pixel_probability_map)
+  {
+    moment += ((static_cast<float>(std::pow(static_cast<float>(pixel_value) - mean, root)) * probability));
+  }
+
+  return moment;
 }
 
 std::map<int32_t, float> HistogramOp::NormalizeHistogramValues(const std::map<int32_t, std::vector<int32_t>> & histogram

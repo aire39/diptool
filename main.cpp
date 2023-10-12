@@ -413,7 +413,7 @@ void RenderTask(sf::RenderWindow & window
         if (histogrameq_menu.IsLocalizeEnchancementMethodType())
         {
           histogrameq_op.SetLocalizeKernelSize(histogrameq_menu.GetKernelX(), histogrameq_menu.GetKernelY());
-          histogrameq_op.SetLocalizeKernelConstants(histogrameq_menu.GetKernelK0(), histogrameq_menu.GetKernelK1());
+          histogrameq_op.SetLocalizeKernelConstants(histogrameq_menu.GetKernelK0(), histogrameq_menu.GetKernelK1(), histogrameq_menu.GetKernelK2(), histogrameq_menu.GetKernelK3(), histogrameq_menu.GetKernelEnhanceConst());
           process_time_begin = std::chrono::high_resolution_clock::now();
           histogrameq_op.ProcessImage(MenuOp_HistogramMethod::LOCALIZE_ENCHANCEMENT
                                      ,source_pixels

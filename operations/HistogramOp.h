@@ -35,11 +35,11 @@ class HistogramOp
   protected:
 
     static std::tuple<std::map<int32_t, std::vector<int32_t>>, int32_t, int32_t> CollectPixelValues(const std::vector<uint8_t> & source_image
-                                                                                            ,uint32_t width
-                                                                                            ,uint32_t height
-                                                                                            ,int32_t offset
-                                                                                            ,int32_t sum_count
-                                                                                            ,int32_t bpp);
+                                                                                                   ,uint32_t width
+                                                                                                   ,uint32_t height
+                                                                                                   ,int32_t offset
+                                                                                                   ,int32_t sum_count
+                                                                                                   ,int32_t bpp);
 
     static std::tuple<std::map<int32_t, std::vector<int32_t>>, int32_t, int32_t> CollectPixelValues(const std::vector<uint8_t> & source_image
                                                                                                    ,uint32_t width
@@ -51,6 +51,18 @@ class HistogramOp
                                                                                                    ,int32_t offset
                                                                                                    ,int32_t sum_count
                                                                                                    ,int32_t bpp);
+
+    static float HistogramMean(const std::map<int32_t, float> & normalized_pixel_probability_map);
+
+    static float HistogramVariance(const std::map<int32_t, float> & normalized_pixel_probability_map
+                                  ,float mean);
+
+    static float HistogramStandardDeviation(const std::map<int32_t, float> & normalized_pixel_probability_map
+                                           ,float mean);
+
+    static float HistogramNthMoment(const std::map<int32_t, float> & normalized_pixel_probability_map
+                                   ,float mean
+                                   ,int32_t root);
 
     static std::map<int32_t, float> NormalizeHistogramValues(const std::map<int32_t, std::vector<int32_t>> & histogram
                                                             ,uint32_t width

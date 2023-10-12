@@ -34,6 +34,9 @@ class HistogramEqualizationMenu
     int32_t GetKernelY() const;
     float GetKernelK0() const;
     float GetKernelK1() const;
+    float GetKernelK2() const;
+    float GetKernelK3() const;
+    float GetKernelEnhanceConst() const;
 
     void ClearData();
 
@@ -48,8 +51,11 @@ class HistogramEqualizationMenu
     int32_t setMethodType = 0;
     int32_t localizeKernelX = 3;
     int32_t localizeKernelY = 3;
-    float localizeKernelK0 = 0.25f;
-    float localizeKernelK1 = 0.75f;
+    float localizeKernelK0 = 0.0f;
+    float localizeKernelK1 = 0.25f;
+    float localizeKernelK2 = 0.0f;
+    float localizeKernelK3 = 0.1f;
+    float localizeKernelEnhanceConst = 22.8f;
     float processTimeSecs = 0.0f;
     int32_t imagePixelWidth = 64;
     int32_t imagePixelHeight = 64;
