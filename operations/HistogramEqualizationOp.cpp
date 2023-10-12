@@ -2,10 +2,16 @@
 
 #include <cmath>
 #include <future>
+#include <string_view>
 #include <spdlog/spdlog.h>
 
+namespace {
+  constexpr uint32_t default_number_of_threads = 8;
+  constexpr std::string_view default_threadpool_name = "HE_EQ";
+}
+
 HistogramEqualizationOp::HistogramEqualizationOp()
-  : workPool(16, "HE_EQ")
+  : workPool(default_number_of_threads, default_threadpool_name.data())
 {
 
 }
@@ -102,10 +108,18 @@ void HistogramEqualizationOp::SetLocalizeKernelSize(int32_t x, int32_t y)
   kernelSizeY = y;
 }
 
-void HistogramEqualizationOp::SetLocalizeKernelConstants(float k0, float k1)
+void HistogramEqualizationOp::SetLocalizeKernelConstants(float k0, float k1, float k2, float k3, float c)
 {
   kernelK0 = k0;
   kernelK1 = k1;
+  kernelK2 = k2;
+  kernelK3 = k3;
+  enhanceConst = c;
+}
+
+MenuOp_HistogramMethod HistogramEqualizationOp::GetCurrentSetOperation() const
+{
+  return histogramMethod;
 }
 
 void HistogramEqualizationOp::ProcessHistogram(MenuOp_HistogramMethod operation
@@ -121,6 +135,8 @@ void HistogramEqualizationOp::ProcessHistogram(MenuOp_HistogramMethod operation
   remappedValuesNormalizedGreen.clear();
   remappedValuesNormalizedBlue.clear();
 
+  histogramMethod = operation;
+
   switch (operation)
   {
     case MenuOp_HistogramMethod::GLOBAL:
@@ -132,16 +148,13 @@ void HistogramEqualizationOp::ProcessHistogram(MenuOp_HistogramMethod operation
       break;
 
     case MenuOp_HistogramMethod::LOCALIZE_ENCHANCEMENT:
-      spdlog::warn("no implementation for localize enhancement");
-      result = source_image;
+      LocalizeEnhancementProcess(source_image, bpp);
       break;
 
     default:
       spdlog::warn("unrecognized method!");
       break;
   }
-
-  histogramMethod = operation;
 }
 
 void HistogramEqualizationOp::GlobalProcess(const std::vector<uint8_t> & source_image
@@ -258,14 +271,11 @@ void HistogramEqualizationOp::LocalizeProcess(const std::vector<uint8_t> & sourc
 
   if (inputColorType == MenuOp_HistogramColor::GRAY)
   {
-    std::vector<std::map<int32_t, float>> kernel_histogram(outWidth * outHeight);
     std::vector<std::map<int32_t, int32_t>> kernel_histogram_remap(outWidth * outHeight);
 
-    auto process_local_pixel = [this] (const std::vector<uint8_t> & source_image, std::vector<std::map<int32_t, float>> & kh, std::vector<std::map<int32_t, int32_t>> & khr, uint8_t & bpp, int32_t i, int32_t j) {
+    auto process_local_pixel = [this] (const std::vector<uint8_t> & source_image, std::vector<std::map<int32_t, int32_t>> & khr, uint8_t & bpp, int32_t i, int32_t j) {
       auto [kernel_he_collection, min_value, max_value] = CollectPixelValues(source_image, outWidth, outHeight, j-(kernelSizeX / 2), i-(kernelSizeY / 2), j+(kernelSizeX / 2) + 1, i+(kernelSizeY / 2)+1, 0, 3, bpp);
       auto kernel_he_normalized = NormalizeHistogramValues(kernel_he_collection, kernelSizeX, kernelSizeY);
-
-      kh[j + (i * outWidth)] = kernel_he_normalized;
 
       float new_mapped_value_gray = 0.0f;
       for (const auto & [k, v] : kernel_he_normalized)
@@ -280,7 +290,7 @@ void HistogramEqualizationOp::LocalizeProcess(const std::vector<uint8_t> & sourc
       for (int32_t j=0; j<outWidth; j++)
       {
         workPool.addjob([&, ii=i, jj=j](){
-          process_local_pixel(source_image, kernel_histogram, kernel_histogram_remap, bpp, ii, jj);
+          process_local_pixel(source_image, kernel_histogram_remap, bpp, ii, jj);
         });
       }
     }
@@ -310,18 +320,13 @@ void HistogramEqualizationOp::LocalizeProcess(const std::vector<uint8_t> & sourc
   }
   else // inputColorType == MenuOp_HistogramColor::RGBA
   {
-    std::vector<std::map<int32_t, float>> kernel_histogram_red(outWidth * outHeight);
-    std::vector<std::map<int32_t, float>> kernel_histogram_green(outWidth * outHeight);
-    std::vector<std::map<int32_t, float>> kernel_histogram_blue(outWidth * outHeight);
     std::vector<std::map<int32_t, int32_t>> kernel_histogram_remap_red(outWidth * outHeight);
     std::vector<std::map<int32_t, int32_t>> kernel_histogram_remap_green(outWidth * outHeight);
     std::vector<std::map<int32_t, int32_t>> kernel_histogram_remap_blue(outWidth * outHeight);
 
-    auto process_local_pixel = [this] (const std::vector<uint8_t> & source_image, std::vector<std::map<int32_t, float>> & kh, std::vector<std::map<int32_t, int32_t>> & khr, uint8_t & bpp, int32_t i, int32_t j, int32_t offset) {
+    auto process_local_pixel = [this] (const std::vector<uint8_t> & source_image, std::vector<std::map<int32_t, int32_t>> & khr, uint8_t & bpp, int32_t i, int32_t j, int32_t offset) {
       auto [kernel_he_collection, min_value, max_value] = CollectPixelValues(source_image, outWidth, outHeight, j-(kernelSizeX / 2), i-(kernelSizeY / 2), j+(kernelSizeX / 2) + 1, i+(kernelSizeY / 2)+1, offset, 1, bpp);
       auto kernel_he_normalized = NormalizeHistogramValues(kernel_he_collection, kernelSizeX, kernelSizeY);
-
-      kh[j + (i * outWidth)] = kernel_he_normalized;
 
       float new_mapped_value_gray = 0.0f;
       for (const auto & [k, v] : kernel_he_normalized)
@@ -336,9 +341,9 @@ void HistogramEqualizationOp::LocalizeProcess(const std::vector<uint8_t> & sourc
       for (int32_t j=0; j<outWidth; j++)
       {
         workPool.addjob([&, ii=i, jj=j](){
-          process_local_pixel(source_image, kernel_histogram_red, kernel_histogram_remap_red, bpp, ii, jj, 0);
-          process_local_pixel(source_image, kernel_histogram_green, kernel_histogram_remap_green, bpp, ii, jj, 1);
-          process_local_pixel(source_image, kernel_histogram_blue, kernel_histogram_remap_blue, bpp, ii, jj, 2);
+          process_local_pixel(source_image, kernel_histogram_remap_red, bpp, ii, jj, 0);
+          process_local_pixel(source_image, kernel_histogram_remap_green, bpp, ii, jj, 1);
+          process_local_pixel(source_image, kernel_histogram_remap_blue, bpp, ii, jj, 2);
         });
       }
     }
@@ -364,5 +369,105 @@ void HistogramEqualizationOp::LocalizeProcess(const std::vector<uint8_t> & sourc
       result[3 + i * bpp] = source_image[3 + i * bpp];
     }
   }
+}
 
+void HistogramEqualizationOp::LocalizeEnhancementProcess(const std::vector<uint8_t> & source_image
+                                                        ,uint8_t bpp)
+{
+  result = source_image;
+
+  auto process_local_pixel = [this] (const std::vector<uint8_t> & source_image, std::vector<uint8_t> & r, float g_mean, float g_sd, float k0, float k1, float k2, float k3, float enhance_const, int32_t offset, int32_t count, uint8_t & bpp, int32_t i, int32_t j) {
+    auto [kernel_he_collection, min_value, max_value] = CollectPixelValues(source_image, outWidth, outHeight, j-(kernelSizeX / 2), i-(kernelSizeY / 2), j+(kernelSizeX / 2) + 1, i+(kernelSizeY / 2)+1, 0, 3, bpp);
+    auto kernel_he_normalized = NormalizeHistogramValues(kernel_he_collection, kernelSizeX, kernelSizeY);
+    auto kernel_mean = HistogramMean(kernel_he_normalized);
+    auto kernel_standard_deviation = HistogramStandardDeviation(kernel_he_normalized, kernel_mean);
+
+    if (((k0 * g_mean) <= kernel_mean && kernel_mean <= (k1 * g_mean)) && ((k2 * g_sd <= kernel_standard_deviation) && (kernel_standard_deviation <= k3 * g_sd)))
+    {
+      if (count > 0)
+      {
+        float gray_value = 0.0f;
+        for (int32_t channel_counter = 0; channel_counter < count; channel_counter++)
+        {
+          gray_value += static_cast<float>(r[(j * bpp) + (i * outWidth * bpp) + offset + channel_counter]);
+        }
+
+        gray_value /= static_cast<float>(count);
+
+        for (int32_t channel_counter = 0; channel_counter < count; channel_counter++)
+        {
+          r[(j * bpp) + (i * outWidth * bpp) + offset + channel_counter] = static_cast<uint8_t>(std::clamp((gray_value * enhance_const), 0.0f, 255.0f));
+        }
+
+      }
+      else
+      {
+        r[(j * bpp) + (i * outWidth * bpp) + offset] = static_cast<uint8_t>(std::clamp(static_cast<float>(r[(j * bpp) + (i * outWidth * bpp) + offset]) * enhance_const, 0.0f,255.0f));
+      }
+    }
+  };
+
+  if (inputColorType == MenuOp_HistogramColor::GRAY)
+  {
+    auto global_mean = std::round(HistogramMean(histogramNormalizedGray));
+    auto global_standard_deviation = std::round(HistogramStandardDeviation(histogramNormalizedGray, global_mean));
+
+    spdlog::info("global mean: {}", global_mean);
+    spdlog::info("global standard deviation: {}", global_standard_deviation);
+
+    for (int32_t i=0; i<outHeight; i++)
+    {
+      for (int32_t j=0; j<outWidth; j++)
+      {
+        workPool.addjob([&, ii=i, jj=j](){
+          process_local_pixel(source_image, result, global_mean, global_standard_deviation, kernelK0, kernelK1, kernelK2, kernelK3, enhanceConst, 0, 3, bpp, ii, jj);
+        });
+      }
+    }
+  }
+  else // MenuOp_HistogramColor::RGBA
+  {
+    auto global_mean_red = std::round(HistogramMean(histogramNormalizedRed));
+    auto global_standard_deviation_red = std::round(HistogramStandardDeviation(histogramNormalizedRed, global_mean_red));
+
+    auto global_mean_green = std::round(HistogramMean(histogramNormalizedGreen));
+    auto global_standard_deviation_green = std::round(HistogramStandardDeviation(histogramNormalizedGreen, global_mean_green));
+
+    auto global_mean_blue = std::round(HistogramMean(histogramNormalizedBlue));
+    auto global_standard_deviation_blue = std::round(HistogramStandardDeviation(histogramNormalizedBlue, global_mean_blue));
+
+    spdlog::info("global mean (red): {}", global_mean_red);
+    spdlog::info("global standard deviation (red): {}", global_standard_deviation_red);
+
+    spdlog::info("global mean (green): {}", global_mean_green);
+    spdlog::info("global standard deviation (green): {}", global_standard_deviation_green);
+
+    spdlog::info("global mean (blue): {}", global_mean_blue);
+    spdlog::info("global standard deviation (blue): {}", global_standard_deviation_blue);
+
+    for (int32_t i=0; i<outHeight; i++)
+    {
+      for (int32_t j=0; j<outWidth; j++)
+      {
+        workPool.addjob([&, ii=i, jj=j](){
+          process_local_pixel(source_image, result, global_mean_red, global_standard_deviation_red, kernelK0, kernelK1, kernelK2, kernelK3, enhanceConst, 0, 0, bpp, ii, jj);
+          process_local_pixel(source_image, result, global_mean_green, global_standard_deviation_green, kernelK0, kernelK1, kernelK2, kernelK3, enhanceConst, 1, 0, bpp, ii, jj);
+          process_local_pixel(source_image, result, global_mean_blue, global_standard_deviation_blue, kernelK0, kernelK1, kernelK2, kernelK3, enhanceConst, 2, 0, bpp, ii, jj);
+        });
+      }
+    }
+
+    auto work_done = std::async([&](){
+      float work_completed = 0.0f;
+      while(work_completed < 1.0f)
+      {
+        work_completed = (static_cast<float>(outWidth * outHeight) - static_cast<float>(workPool.numberofjobs())) / static_cast<float>(outWidth * outHeight);
+        spdlog::info("histogram work completed: {:.2f}%", work_completed * 100.0f);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+      }
+    });
+
+    workPool.waitforthread();
+    work_done.wait();
+  }
 }

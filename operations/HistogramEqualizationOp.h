@@ -19,9 +19,9 @@ class HistogramEqualizationOp : public HistogramOp
 
     void SetHistogramColorType(MenuOp_HistogramColor color_type);
     void SetLocalizeKernelSize(int32_t x, int32_t y);
-    void SetLocalizeKernelConstants(float k0, float k1);
+    void SetLocalizeKernelConstants(float k0, float k1, float k2, float k3, float c);
 
-    float WorkProcessed();
+    [[nodiscard]] MenuOp_HistogramMethod GetCurrentSetOperation() const;
 
   protected:
     void ProcessHistogram(MenuOp_HistogramMethod operation
@@ -45,6 +45,9 @@ class HistogramEqualizationOp : public HistogramOp
     int32_t kernelSizeY = 3;
     float kernelK0 = 0.25f;
     float kernelK1 = 0.75f;
+    float kernelK2 = 0.25f;
+    float kernelK3 = 0.75f;
+    float enhanceConst = 22.8f;
 
     cthreadpool workPool;
 
@@ -53,4 +56,7 @@ class HistogramEqualizationOp : public HistogramOp
 
     void LocalizeProcess(const std::vector<uint8_t> & source_image
                         ,uint8_t bpp);
+
+    void LocalizeEnhancementProcess(const std::vector<uint8_t> & source_image
+                                   ,uint8_t bpp);
 };

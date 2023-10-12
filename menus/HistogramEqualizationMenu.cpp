@@ -166,6 +166,15 @@ void HistogramEqualizationMenu::RenderMenu()
     ImGui::InputFloat("K_0", &localizeKernelK0, 0.01f, 0.1f, "%.3f", ImGuiInputTextFlags_::ImGuiInputTextFlags_CharsDecimal | ImGuiInputTextFlags_::ImGuiInputTextFlags_AutoSelectAll);
     ImGui::InputFloat("K_1", &localizeKernelK1, 0.01f, 0.1f, "%.3f", ImGuiInputTextFlags_::ImGuiInputTextFlags_CharsDecimal | ImGuiInputTextFlags_::ImGuiInputTextFlags_AutoSelectAll);
 
+    ImGui::NewLine();
+
+    ImGui::InputFloat("K_2", &localizeKernelK2, 0.01f, 0.1f, "%.3f", ImGuiInputTextFlags_::ImGuiInputTextFlags_CharsDecimal | ImGuiInputTextFlags_::ImGuiInputTextFlags_AutoSelectAll);
+    ImGui::InputFloat("K_3", &localizeKernelK3, 0.01f, 0.1f, "%.3f", ImGuiInputTextFlags_::ImGuiInputTextFlags_CharsDecimal | ImGuiInputTextFlags_::ImGuiInputTextFlags_AutoSelectAll);
+
+    ImGui::NewLine();
+
+    ImGui::InputFloat("C", &localizeKernelEnhanceConst, 0.01f, 0.1f, "%.3f", ImGuiInputTextFlags_::ImGuiInputTextFlags_CharsDecimal | ImGuiInputTextFlags_::ImGuiInputTextFlags_AutoSelectAll);
+
     ImGui::EndGroup();
   }
 
@@ -273,6 +282,21 @@ float HistogramEqualizationMenu::GetKernelK0() const
 float HistogramEqualizationMenu::GetKernelK1() const
 {
   return localizeKernelK1;
+}
+
+float HistogramEqualizationMenu::GetKernelK2() const
+{
+  return localizeKernelK2;
+}
+
+float HistogramEqualizationMenu::GetKernelK3() const
+{
+  return localizeKernelK3;
+}
+
+float HistogramEqualizationMenu::GetKernelEnhanceConst() const
+{
+  return localizeKernelEnhanceConst;
 }
 
 void HistogramEqualizationMenu::ClearData()
