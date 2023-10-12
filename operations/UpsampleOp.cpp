@@ -7,7 +7,7 @@
 
 namespace
 {
-  std::array<uint8_t, 3> pixel_gather(const int32_t & x
+  std::array<uint8_t, 4> pixel_gather(const int32_t & x
                                      ,const int32_t & y
                                      ,const int32_t & w
                                      ,const int32_t & h
@@ -18,6 +18,7 @@ namespace
     int32_t pixel_value_red = 0;
     int32_t pixel_value_green = 0;
     int32_t pixel_value_blue = 0;
+    int32_t pixel_value_alpha = 0;
 
     for (int32_t i=0; i<(number_of_pixel_neighbors + 1); i++)
     {
@@ -27,6 +28,7 @@ namespace
         pixel_value_red += static_cast<int32_t>(source_image[((x + i) * bpp) + (y * w * bpp) + 0]);
         pixel_value_green += static_cast<int32_t>(source_image[((x + i) * bpp) + (y * w * bpp) + 1]);
         pixel_value_blue += static_cast<int32_t>(source_image[((x + i) * bpp) + (y * w * bpp) + 2]);
+        pixel_value_alpha += static_cast<int32_t>(source_image[((x + i) * bpp) + (y * w * bpp) + 3]);
       }
       else
       {
@@ -36,6 +38,7 @@ namespace
         pixel_value_red += static_cast<int32_t>(source_image[(x_fix * bpp) + (y_fix * w * bpp) + 0]);
         pixel_value_green += static_cast<int32_t>(source_image[(x_fix * bpp) + (y_fix * w * bpp) + 1]);
         pixel_value_blue += static_cast<int32_t>(source_image[(x_fix * bpp) + (y_fix * w * bpp) + 2]);
+        pixel_value_alpha += static_cast<int32_t>(source_image[(x_fix * bpp) + (y_fix * w * bpp) + 3]);
       }
     }
 
@@ -48,9 +51,13 @@ namespace
     pixel_value_blue /= (number_of_pixel_neighbors + 1);
     pixel_value_blue = std::clamp(pixel_value_blue, 0, static_cast<int32_t>(std::numeric_limits<uint8_t>::max()));
 
+    pixel_value_alpha /= (number_of_pixel_neighbors + 1);
+    pixel_value_alpha = std::clamp(pixel_value_alpha, 0, static_cast<int32_t>(std::numeric_limits<uint8_t>::max()));
+
     return {static_cast<uint8_t>(pixel_value_red)
-        ,static_cast<uint8_t>(pixel_value_green)
-        ,static_cast<uint8_t>(pixel_value_blue)};
+           ,static_cast<uint8_t>(pixel_value_green)
+           ,static_cast<uint8_t>(pixel_value_blue)
+           ,static_cast<uint8_t>(pixel_value_alpha)};
   }
 
   void set_pixel(const uint32_t & x
@@ -58,12 +65,12 @@ namespace
                 ,const uint32_t & width
                 ,const uint32_t & bpp
                 ,std::vector<uint8_t> & image
-                ,const std::array<uint8_t, 3> & pixel_color_rgb)
+                ,const std::array<uint8_t, 4> & pixel_color_rgb)
   {
     image[(x * bpp) + (y * width * bpp) + 0] = pixel_color_rgb[0];
     image[(x * bpp) + (y * width * bpp) + 1] = pixel_color_rgb[1];
     image[(x * bpp) + (y * width * bpp) + 2] = pixel_color_rgb[2];
-    image[(x * bpp) + (y * width * bpp) + 3] = 255;
+    image[(x * bpp) + (y * width * bpp) + 3] = pixel_color_rgb[3];
   }
 }
 
@@ -149,32 +156,28 @@ void UpsampleOp::NearestAlgorithm(const std::vector<uint8_t> & source_image
                  ,static_cast<int32_t>(width << (r+1))
                  ,bpp
                  ,result
-                 ,pixel_rgb_value
-                 );
+                 ,pixel_rgb_value);
 
         set_pixel((j * 2) + 1
                  ,(i * 2)
                  ,static_cast<int32_t>(width << (r+1))
                  ,bpp
                  ,result
-                 ,pixel_rgb_value
-                 );
+                 ,pixel_rgb_value);
 
         set_pixel((j * 2)
                  ,(i * 2) + 1
                  ,static_cast<int32_t>(width << (r+1))
                  ,bpp
                  ,result
-                 ,pixel_rgb_value
-                 );
+                 ,pixel_rgb_value);
 
         set_pixel((j * 2) + 1
                  ,(i * 2) + 1
                  ,static_cast<int32_t>(width << (r+1))
                  ,bpp
                  ,result
-                 ,pixel_rgb_value
-                 );
+                 ,pixel_rgb_value);
       }
     }
 
@@ -228,13 +231,13 @@ void UpsampleOp::LinearAlgorithm(const std::vector<uint8_t> & source_image
         // against the intensity values at those corners. This needs to be done for each channel. Assuming
         // an RGB pixel (ignoring the Alpha channel)
 
-        std::array<int32_t, 3> pixel_rgb_value_sum = {0, 0, 0};
+        std::array<int32_t, 4> pixel_rgb_value_sum = {0, 0, 0};
 
         auto idx_tr = static_cast<float>(j+1);
         auto idx_tl = static_cast<float>(j-1);
         auto idx_px  = (idx_tr + idx_tl) / 2.0f;
 
-        for (size_t k=0; k<3; k++)
+        for (size_t k=0; k<4; k++)
         {
           float pix_1 = ((idx_tr - idx_px) / (idx_tr - idx_tl)) * static_cast<float>(pixel_rgb_value_left[k]);
           float pix_2 = ((idx_px - idx_tl) / (idx_tr - idx_tl)) * static_cast<float>(pixel_rgb_value_right[k]);
@@ -243,41 +246,38 @@ void UpsampleOp::LinearAlgorithm(const std::vector<uint8_t> & source_image
           pixel_rgb_value_sum[k] = static_cast<int32_t>(pix_p);
         }
 
-        std::array<uint8_t, 3> pixel_rgb_value = {static_cast<uint8_t>(pixel_rgb_value_sum[0])
+        std::array<uint8_t, 4> pixel_rgb_value = {static_cast<uint8_t>(pixel_rgb_value_sum[0])
                                                  ,static_cast<uint8_t>(pixel_rgb_value_sum[1])
-                                                 ,static_cast<uint8_t>(pixel_rgb_value_sum[2])};
+                                                 ,static_cast<uint8_t>(pixel_rgb_value_sum[2])
+                                                 ,static_cast<uint8_t>(pixel_rgb_value_sum[3])};
 
         set_pixel((j * 2)
                  ,(i * 2)
                  ,static_cast<int32_t>(width << (r+1))
                  ,bpp
                  ,result
-                 ,pixel_rgb_value
-                 );
+                 ,pixel_rgb_value);
 
         set_pixel((j * 2) + 1
                  ,(i * 2)
                  ,static_cast<int32_t>(width << (r+1))
                  ,bpp
                  ,result
-                 ,pixel_rgb_value
-                 );
+                 ,pixel_rgb_value);
 
         set_pixel((j * 2)
                  ,(i * 2) + 1
                  ,static_cast<int32_t>(width << (r+1))
                  ,bpp
                  ,result
-                 ,pixel_rgb_value
-                 );
+                 ,pixel_rgb_value);
 
         set_pixel((j * 2) + 1
                  ,(i * 2) + 1
                  ,static_cast<int32_t>(width << (r+1))
                  ,bpp
                  ,result
-                 ,pixel_rgb_value
-                 );
+                 ,pixel_rgb_value);
       }
     }
 
@@ -348,7 +348,7 @@ void UpsampleOp::BilinearAlgorithm(const std::vector<uint8_t> & source_image
         // against the intensity values at those corners. This needs to be done for each channel. Assuming
         // an RGB pixel (ignoring the Alpha channel)
 
-        std::array<int32_t, 3> pixel_rgb_value_sum = {0, 0, 0};
+        std::array<int32_t, 4> pixel_rgb_value_sum = {0, 0, 0};
 
         auto idx_tr = static_cast<float>(j+1);
         auto idx_tl = static_cast<float>(j-1);
@@ -357,7 +357,7 @@ void UpsampleOp::BilinearAlgorithm(const std::vector<uint8_t> & source_image
         auto idx_b  = static_cast<float>(i+1);
         auto idx_py = (idx_t + idx_b) / 2.0f;
 
-        for (size_t k=0; k<3; k++)
+        for (size_t k=0; k<4; k++)
         {
           float pix_top_1 =  ((idx_tr - idx_px) / (idx_tr - idx_tl)) * static_cast<float>(pixel_rgb_value_topleft[k]);
           float pix_top_2 =  ((idx_px - idx_tl) / (idx_tr - idx_tl)) * static_cast<float>(pixel_rgb_value_topright[k]);
@@ -374,41 +374,38 @@ void UpsampleOp::BilinearAlgorithm(const std::vector<uint8_t> & source_image
           pixel_rgb_value_sum[k] = static_cast<int32_t>(pix_p);
         }
 
-        std::array<uint8_t, 3> pixel_rgb_value = {std::clamp(static_cast<uint8_t>(pixel_rgb_value_sum[0]), uint8_t(0), uint8_t(255))
+        std::array<uint8_t, 4> pixel_rgb_value = {std::clamp(static_cast<uint8_t>(pixel_rgb_value_sum[0]), uint8_t(0), uint8_t(255))
                                                  ,std::clamp(static_cast<uint8_t>(pixel_rgb_value_sum[1]), uint8_t(0), uint8_t(255))
-                                                 ,std::clamp(static_cast<uint8_t>(pixel_rgb_value_sum[2]), uint8_t(0), uint8_t(255))};
+                                                 ,std::clamp(static_cast<uint8_t>(pixel_rgb_value_sum[2]), uint8_t(0), uint8_t(255))
+                                                 ,std::clamp(static_cast<uint8_t>(pixel_rgb_value_sum[3]), uint8_t(0), uint8_t(255))};
 
         set_pixel((j * 2)
                  ,(i * 2)
                  ,static_cast<int32_t>(width << (r+1))
                  ,bpp
                  ,result
-                 ,pixel_rgb_value
-                 );
+                 ,pixel_rgb_value);
 
         set_pixel((j * 2) + 1
                  ,(i * 2)
                  ,static_cast<int32_t>(width << (r+1))
                  ,bpp
                  ,result
-                 ,pixel_rgb_value
-                 );
+                 ,pixel_rgb_value);
 
         set_pixel((j * 2)
                  ,(i * 2) + 1
                  ,static_cast<int32_t>(width << (r+1))
                  ,bpp
                  ,result
-                 ,pixel_rgb_value
-                 );
+                 ,pixel_rgb_value);
 
         set_pixel((j * 2) + 1
                  ,(i * 2) + 1
                  ,static_cast<int32_t>(width << (r+1))
                  ,bpp
                  ,result
-                 ,pixel_rgb_value
-                 );
+                 ,pixel_rgb_value);
       }
     }
 

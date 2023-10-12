@@ -169,8 +169,8 @@ void HistogramEqualizationMenu::RenderMenu()
     ImGui::EndGroup();
   }
 
-  localizeKernelX = std::clamp(localizeKernelX, 1, 512);
-  localizeKernelY = std::clamp(localizeKernelY, 1, 512);
+  localizeKernelX = std::clamp(localizeKernelX, 1, imagePixelWidth);
+  localizeKernelY = std::clamp(localizeKernelY, 1, imagePixelHeight);
 
   ImGui::NewLine();
 
@@ -222,6 +222,12 @@ void HistogramEqualizationMenu::SetHistogramRemapData(std::vector<std::map<int32
 void HistogramEqualizationMenu::SetProcessTime(float process_time)
 {
   processTimeSecs = process_time;
+}
+
+void HistogramEqualizationMenu::SetSizeOfImage(int32_t pixel_width, int32_t pixel_height)
+{
+  imagePixelWidth = pixel_width;
+  imagePixelHeight = pixel_height;
 }
 
 bool HistogramEqualizationMenu::IsHistogramColorTypeGray() const

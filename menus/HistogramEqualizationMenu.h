@@ -22,6 +22,7 @@ class HistogramEqualizationMenu
     void SetHistogramRemapData(std::vector<std::map<int32_t, float>> & histogram_data);
 
     void SetProcessTime(float process_time);
+    void SetSizeOfImage(int32_t pixel_width, int32_t pixel_height);
 
     bool IsHistogramColorTypeGray() const;
     bool IsHistogramColorTypeRGBA() const;
@@ -50,6 +51,7 @@ class HistogramEqualizationMenu
     float localizeKernelK0 = 0.25f;
     float localizeKernelK1 = 0.75f;
     float processTimeSecs = 0.0f;
-
+    int32_t imagePixelWidth = 64;
+    int32_t imagePixelHeight = 64;
     std::mutex histogramMtx;
 };
