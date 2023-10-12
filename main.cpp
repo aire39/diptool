@@ -364,6 +364,7 @@ void RenderTask(sf::RenderWindow & window
     if (menu.IsHistogramEqualizationSet())
     {
       histogrameq_menu.RenderMenu();
+      histogrameq_menu.SetSizeOfImage(static_cast<int32_t>(loaded_image.getSize().x), static_cast<int32_t>(loaded_image.getSize().y));
 
       if (histogrameq_menu.ProcessBegin())
       {

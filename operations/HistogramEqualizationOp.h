@@ -21,6 +21,8 @@ class HistogramEqualizationOp : public HistogramOp
     void SetLocalizeKernelSize(int32_t x, int32_t y);
     void SetLocalizeKernelConstants(float k0, float k1);
 
+    float WorkProcessed();
+
   protected:
     void ProcessHistogram(MenuOp_HistogramMethod operation
                          ,const std::vector<uint8_t> & source_image

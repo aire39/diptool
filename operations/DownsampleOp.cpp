@@ -7,7 +7,7 @@
 
 namespace
 {
-  std::array<uint8_t, 3> pixel_gather(const int32_t & x
+  std::array<uint8_t, 4> pixel_gather(const int32_t & x
                                      ,const int32_t & y
                                      ,const int32_t & w
                                      ,const int32_t & h
@@ -18,6 +18,7 @@ namespace
     int32_t pixel_value_red = 0;
     int32_t pixel_value_green = 0;
     int32_t pixel_value_blue = 0;
+    int32_t pixel_value_alpha = 0;
 
     for (int32_t i=0; i<(number_of_pixel_neighbors+1); i++)
     {
@@ -27,6 +28,7 @@ namespace
         pixel_value_red += static_cast<int32_t>(source_image[((x + i) * bpp) + (y * w * bpp) + 0]);
         pixel_value_green += static_cast<int32_t>(source_image[((x + i) * bpp) + (y * w * bpp) + 1]);
         pixel_value_blue += static_cast<int32_t>(source_image[((x + i) * bpp) + (y * w * bpp) + 2]);
+        pixel_value_alpha += static_cast<int32_t>(source_image[((x + i) * bpp) + (y * w * bpp) + 3]);
       }
       else
       {
@@ -36,6 +38,7 @@ namespace
         pixel_value_red += static_cast<int32_t>(source_image[(x_fix * bpp) + (y_fix * w * bpp) + 0]);
         pixel_value_green += static_cast<int32_t>(source_image[(x_fix * bpp) + (y_fix * w * bpp) + 1]);
         pixel_value_blue += static_cast<int32_t>(source_image[(x_fix * bpp) + (y_fix * w * bpp) + 2]);
+        pixel_value_alpha += static_cast<int32_t>(source_image[(x_fix * bpp) + (y_fix * w * bpp) + 3]);
       }
     }
 
@@ -48,9 +51,13 @@ namespace
     pixel_value_blue /= (number_of_pixel_neighbors + 1);
     pixel_value_blue = std::clamp(pixel_value_blue, 0, static_cast<int32_t>(std::numeric_limits<uint8_t>::max()));
 
+    pixel_value_alpha /= (number_of_pixel_neighbors + 1);
+    pixel_value_alpha = std::clamp(pixel_value_alpha, 0, static_cast<int32_t>(std::numeric_limits<uint8_t>::max()));
+
     return {static_cast<uint8_t>(pixel_value_red)
-        ,static_cast<uint8_t>(pixel_value_green)
-        ,static_cast<uint8_t>(pixel_value_blue)};
+           ,static_cast<uint8_t>(pixel_value_green)
+           ,static_cast<uint8_t>(pixel_value_blue)
+           ,static_cast<uint8_t>(pixel_value_alpha)};
   }
 
   void set_pixel(const uint32_t & x
@@ -58,12 +65,12 @@ namespace
                 ,const uint32_t & width
                 ,const uint32_t & bpp
                 ,std::vector<uint8_t> & image
-                ,const std::array<uint8_t, 3> & pixel_color_rgb)
+                ,const std::array<uint8_t, 4> & pixel_color_rgb)
   {
     image[(x * bpp) + (y * width * bpp) + 0] = pixel_color_rgb[0];
     image[(x * bpp) + (y * width * bpp) + 1] = pixel_color_rgb[1];
     image[(x * bpp) + (y * width * bpp) + 2] = pixel_color_rgb[2];
-    image[(x * bpp) + (y * width * bpp) + 3] = 255;
+    image[(x * bpp) + (y * width * bpp) + 3] = pixel_color_rgb[3];
   }
 }
 
@@ -132,15 +139,16 @@ void DownsampleOp::DecimateAlgorithm(const std::vector<uint8_t> & source_image
       {
         // average the 4 neighboring pixels and set the new pixel value in the output image buffer
         auto pixel_rgb_value_0 = pixel_gather(j
-                                                                 ,i
-                                                                 ,static_cast<int32_t>(width >> r)
-                                                                 ,static_cast<int32_t>(height >> r)
-                                                                 ,combine_value
-                                                                 ,bpp
-                                                                 ,dest_result);
+                                             ,i
+                                             ,static_cast<int32_t>(width >> r)
+                                             ,static_cast<int32_t>(height >> r)
+                                             ,combine_value
+                                             ,bpp
+                                             ,dest_result);
 
-        std::array<uint8_t, 3> pixel_rgb_value = {static_cast<uint8_t>(pixel_rgb_value_0[0])
+        std::array<uint8_t, 4> pixel_rgb_value = {static_cast<uint8_t>(pixel_rgb_value_0[0])
                                                  ,static_cast<uint8_t>(pixel_rgb_value_0[1])
+                                                 ,static_cast<uint8_t>(pixel_rgb_value_0[2])
                                                  ,static_cast<uint8_t>(pixel_rgb_value_0[2])};
 
         set_pixel((j / 2)
@@ -148,8 +156,7 @@ void DownsampleOp::DecimateAlgorithm(const std::vector<uint8_t> & source_image
                  ,static_cast<int32_t>(width >> (r+1))
                  ,bpp
                  ,result
-                 ,pixel_rgb_value
-                 );
+                 ,pixel_rgb_value);
       }
     }
 
@@ -184,36 +191,37 @@ void DownsampleOp::NearestAlgorithm(const std::vector<uint8_t> & source_image
       {
         // average the 4 neighboring pixels and set the new pixel value in the output image buffer
         auto pixel_rgb_value_0 = pixel_gather(j
-                                                                 ,i
-                                                                 ,static_cast<int32_t>(width >> r)
-                                                                 ,static_cast<int32_t>(height >> r)
-                                                                 ,combine_value
-                                                                 ,bpp
-                                                                 ,dest_result);
+                                             ,i
+                                             ,static_cast<int32_t>(width >> r)
+                                             ,static_cast<int32_t>(height >> r)
+                                             ,combine_value
+                                             ,bpp
+                                             ,dest_result);
 
         auto pixel_rgb_value_1 = pixel_gather(j
-                                                                 ,i+1
-                                                                 ,static_cast<int32_t>(width >> r)
-                                                                 ,static_cast<int32_t>(height >> r)
-                                                                 ,combine_value
-                                                                 ,bpp
-                                                                 ,dest_result);
+                                             ,i+1
+                                             ,static_cast<int32_t>(width >> r)
+                                             ,static_cast<int32_t>(height >> r)
+                                             ,combine_value
+                                             ,bpp
+                                             ,dest_result);
 
-        std::array<int32_t, 3> pixel_rgb_value_sum = {(pixel_rgb_value_0[0]+pixel_rgb_value_1[0]) / 2
+        std::array<int32_t, 4> pixel_rgb_value_sum = {(pixel_rgb_value_0[0]+pixel_rgb_value_1[0]) / 2
                                                      ,(pixel_rgb_value_0[1]+pixel_rgb_value_1[1]) / 2
-                                                     ,(pixel_rgb_value_0[2]+pixel_rgb_value_1[2]) / 2};
+                                                     ,(pixel_rgb_value_0[2]+pixel_rgb_value_1[2]) / 2
+                                                     ,(pixel_rgb_value_0[3]+pixel_rgb_value_1[3]) / 2};
 
-        std::array<uint8_t, 3> pixel_rgb_value = {static_cast<uint8_t>(pixel_rgb_value_sum[0])
+        std::array<uint8_t, 4> pixel_rgb_value = {static_cast<uint8_t>(pixel_rgb_value_sum[0])
                                                  ,static_cast<uint8_t>(pixel_rgb_value_sum[1])
-                                                 ,static_cast<uint8_t>(pixel_rgb_value_sum[2])};
+                                                 ,static_cast<uint8_t>(pixel_rgb_value_sum[2])
+                                                 ,static_cast<uint8_t>(pixel_rgb_value_sum[3])};
 
         set_pixel((j / 2)
                  ,(i / 2)
                  ,static_cast<int32_t>(width >> (r+1))
                  ,bpp
                  ,result
-                 ,pixel_rgb_value
-                 );
+                 ,pixel_rgb_value);
       }
     }
 

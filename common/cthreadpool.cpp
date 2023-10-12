@@ -1,9 +1,8 @@
 #include "cthreadpool.h"
 #include <chrono>
-#include <spdlog/spdlog.h>
 
 namespace {
-  const constexpr size_t wait_time_ms = 100;
+  const constexpr size_t wait_time_ms = 10;
   const constexpr char * default_thread_name = "tp";
 }
 
@@ -35,10 +34,17 @@ cthreadpool::~cthreadpool()
   running = false;
 }
 
-void cthreadpool::addjob(std::function<void()> job)
+void cthreadpool::addjob(const std::function<void()>& job)
 {
   std::lock_guard<std::recursive_mutex> lock(qrmutex);
   queuedJobs.push(job);
+  cvJobAvailable.notify_all();
+}
+
+void cthreadpool::addjob(std::function<void()>&& job) noexcept
+{
+  std::lock_guard<std::recursive_mutex> lock(qrmutex);
+  queuedJobs.push(std::forward<std::function<void()>>(job));
   cvJobAvailable.notify_all();
 }
 
@@ -85,9 +91,14 @@ size_t cthreadpool::threadsinuse()
   return n_used;
 }
 
-size_t cthreadpool::numberofthreads()
+size_t cthreadpool::numberofthreads() const
 {
   return nThreads;
+}
+
+[[nodiscard]] size_t cthreadpool::numberofjobs() const
+{
+  return queuedJobs.size();
 }
 
 void cthreadpool::threadpooltask(size_t thread_index)
@@ -103,6 +114,11 @@ void cthreadpool::threadpooltask(size_t thread_index)
         job = queuedJobs.front();
         queuedJobs.pop();
         threadInUse[thread_index] = true;
+
+        if (!queuedJobs.empty())
+        {
+          cvJobAvailable.notify_all();
+        }
       }
     }
 
@@ -114,7 +130,6 @@ void cthreadpool::threadpooltask(size_t thread_index)
       threadInUse[thread_index] = false;
     }
 
-    // TODO: needs to be reworked as this is slowing the processing down
     std::unique_lock<std::mutex> job_lock(jobmutex);
     cvJobAvailable.wait_for(job_lock, std::chrono::milliseconds(wait_time_ms), [this]() {return !queuedJobs.empty();});
 

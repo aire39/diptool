@@ -1,10 +1,11 @@
 #include "HistogramEqualizationOp.h"
 
 #include <cmath>
+#include <future>
 #include <spdlog/spdlog.h>
 
 HistogramEqualizationOp::HistogramEqualizationOp()
-  : workPool(8, "HE_EQ")
+  : workPool(16, "HE_EQ")
 {
 
 }
@@ -235,7 +236,7 @@ void HistogramEqualizationOp::GlobalProcess(const std::vector<uint8_t> & source_
       result[0 + i * bpp] = remappedValuesGray[gray_value];
       result[1 + i * bpp] = remappedValuesGray[gray_value];
       result[2 + i * bpp] = remappedValuesGray[gray_value];
-      result[3 + i * bpp] = 255;
+      result[3 + i * bpp] = source_image[3 + i * bpp];
     }
   }
   else if (inputColorType == MenuOp_HistogramColor::RGBA)
@@ -245,7 +246,7 @@ void HistogramEqualizationOp::GlobalProcess(const std::vector<uint8_t> & source_
       result[0 + i * bpp] = remappedValuesRed[source_image[0 + i * bpp]];
       result[1 + i * bpp] = remappedValuesGreen[source_image[1 + i * bpp]];
       result[2 + i * bpp] = remappedValuesBlue[source_image[2 + i * bpp]];
-      result[3 + i * bpp] = 255;
+      result[3 + i * bpp] = source_image[3 + i * bpp];
     }
   }
 }
@@ -255,58 +256,113 @@ void HistogramEqualizationOp::LocalizeProcess(const std::vector<uint8_t> & sourc
 {
   result = source_image;
 
-  std::vector<std::map<int32_t, float>> kernel_histogram(outWidth * outHeight);
-  std::vector<std::map<int32_t, int32_t>> kernel_histogram_remap(outWidth * outHeight);
-
-  auto process_local_pixel = [this] (const std::vector<uint8_t> & source_image, std::vector<std::map<int32_t, float>> & kh, std::vector<std::map<int32_t, int32_t>> & khr, uint8_t bpp, int32_t i, int32_t j) {
-    auto [kernel_he_collection, min_value, max_value] = CollectPixelValues(source_image, outWidth, outHeight, j-(kernelSizeX / 2), i-(kernelSizeY / 2), j+(kernelSizeX / 2) + 1, i+(kernelSizeY / 2)+1, 0, 3, bpp);
-    auto kernel_he_normalized = NormalizeHistogramValues(kernel_he_collection, kernelSizeX, kernelSizeY);
-
-    kh[j + (i * outWidth)] = kernel_he_normalized;
-
-    float new_mapped_value_gray = 0.0f;
-    for (const auto & [k, v] : kernel_he_normalized)
-    {
-      new_mapped_value_gray += kernel_he_normalized[k];
-      khr[j + (i * outWidth)][k] = static_cast<int32_t>(std::round(static_cast<float>(HistogramOp::maxBppValue * new_mapped_value_gray)));
-    }
-  };
-
-  for (int32_t i=0; i<outHeight; i++)
-  {
-    for (int32_t j=0; j<outWidth; j++)
-    {
-      workPool.addjob([&, b=bpp, ii=i, jj=j](){
-        process_local_pixel(source_image, kernel_histogram, kernel_histogram_remap, b, ii, jj);
-      });
-    }
-  }
-
-  workPool.waitforthread();
-
   if (inputColorType == MenuOp_HistogramColor::GRAY)
   {
+    std::vector<std::map<int32_t, float>> kernel_histogram(outWidth * outHeight);
+    std::vector<std::map<int32_t, int32_t>> kernel_histogram_remap(outWidth * outHeight);
+
+    auto process_local_pixel = [this] (const std::vector<uint8_t> & source_image, std::vector<std::map<int32_t, float>> & kh, std::vector<std::map<int32_t, int32_t>> & khr, uint8_t & bpp, int32_t i, int32_t j) {
+      auto [kernel_he_collection, min_value, max_value] = CollectPixelValues(source_image, outWidth, outHeight, j-(kernelSizeX / 2), i-(kernelSizeY / 2), j+(kernelSizeX / 2) + 1, i+(kernelSizeY / 2)+1, 0, 3, bpp);
+      auto kernel_he_normalized = NormalizeHistogramValues(kernel_he_collection, kernelSizeX, kernelSizeY);
+
+      kh[j + (i * outWidth)] = kernel_he_normalized;
+
+      float new_mapped_value_gray = 0.0f;
+      for (const auto & [k, v] : kernel_he_normalized)
+      {
+        new_mapped_value_gray += kernel_he_normalized[k];
+        khr[j + (i * outWidth)][k] = static_cast<int32_t>(std::round(static_cast<float>(HistogramOp::maxBppValue * new_mapped_value_gray)));
+      }
+    };
+
+    for (int32_t i=0; i<outHeight; i++)
+    {
+      for (int32_t j=0; j<outWidth; j++)
+      {
+        workPool.addjob([&, ii=i, jj=j](){
+          process_local_pixel(source_image, kernel_histogram, kernel_histogram_remap, bpp, ii, jj);
+        });
+      }
+    }
+
+    auto work_done = std::async([&](){
+      float work_completed = 0.0f;
+      while(work_completed < 1.0f)
+      {
+        work_completed = (static_cast<float>(outWidth * outHeight) - static_cast<float>(workPool.numberofjobs())) / static_cast<float>(outWidth * outHeight);
+        spdlog::info("histogram work completed: {:.2f}%", work_completed * 100.0f);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+      }
+    });
+
+    workPool.waitforthread();
+    work_done.wait_for(std::chrono::milliseconds(1000));
+
     for (size_t i=0; i<(outWidth * outHeight); i++)
     {
       int32_t gray_value = (source_image[0 + i * bpp] + source_image[1 + i * bpp] + source_image[2 + i * bpp]) / 3;
       result[0 + i * bpp] = kernel_histogram_remap[i][gray_value];
       result[1 + i * bpp] = kernel_histogram_remap[i][gray_value];
       result[2 + i * bpp] = kernel_histogram_remap[i][gray_value];
-      result[3 + i * bpp] = 255;
+      result[3 + i * bpp] = source_image[3 + i * bpp];
     }
+
   }
-  else if (inputColorType == MenuOp_HistogramColor::RGBA)
+  else // inputColorType == MenuOp_HistogramColor::RGBA
   {
-    spdlog::warn("no implementation for RGBA localization yet!");
-    /*
+    std::vector<std::map<int32_t, float>> kernel_histogram_red(outWidth * outHeight);
+    std::vector<std::map<int32_t, float>> kernel_histogram_green(outWidth * outHeight);
+    std::vector<std::map<int32_t, float>> kernel_histogram_blue(outWidth * outHeight);
+    std::vector<std::map<int32_t, int32_t>> kernel_histogram_remap_red(outWidth * outHeight);
+    std::vector<std::map<int32_t, int32_t>> kernel_histogram_remap_green(outWidth * outHeight);
+    std::vector<std::map<int32_t, int32_t>> kernel_histogram_remap_blue(outWidth * outHeight);
+
+    auto process_local_pixel = [this] (const std::vector<uint8_t> & source_image, std::vector<std::map<int32_t, float>> & kh, std::vector<std::map<int32_t, int32_t>> & khr, uint8_t & bpp, int32_t i, int32_t j, int32_t offset) {
+      auto [kernel_he_collection, min_value, max_value] = CollectPixelValues(source_image, outWidth, outHeight, j-(kernelSizeX / 2), i-(kernelSizeY / 2), j+(kernelSizeX / 2) + 1, i+(kernelSizeY / 2)+1, offset, 1, bpp);
+      auto kernel_he_normalized = NormalizeHistogramValues(kernel_he_collection, kernelSizeX, kernelSizeY);
+
+      kh[j + (i * outWidth)] = kernel_he_normalized;
+
+      float new_mapped_value_gray = 0.0f;
+      for (const auto & [k, v] : kernel_he_normalized)
+      {
+        new_mapped_value_gray += kernel_he_normalized[k];
+        khr[j + (i * outWidth)][k] = static_cast<int32_t>(std::round(static_cast<float>(HistogramOp::maxBppValue * new_mapped_value_gray)));
+      }
+    };
+
+    for (int32_t i=0; i<outHeight; i++)
+    {
+      for (int32_t j=0; j<outWidth; j++)
+      {
+        workPool.addjob([&, ii=i, jj=j](){
+          process_local_pixel(source_image, kernel_histogram_red, kernel_histogram_remap_red, bpp, ii, jj, 0);
+          process_local_pixel(source_image, kernel_histogram_green, kernel_histogram_remap_green, bpp, ii, jj, 1);
+          process_local_pixel(source_image, kernel_histogram_blue, kernel_histogram_remap_blue, bpp, ii, jj, 2);
+        });
+      }
+    }
+
+    auto work_done = std::async([&](){
+      float work_completed = 0.0f;
+      while(work_completed < 1.0f)
+      {
+        work_completed = (static_cast<float>(outWidth * outHeight) - static_cast<float>(workPool.numberofjobs())) / static_cast<float>(outWidth * outHeight);
+        spdlog::info("histogram work completed: {:.2f}%", work_completed * 100.0f);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+      }
+    });
+
+    workPool.waitforthread();
+    work_done.wait_for(std::chrono::milliseconds(1000));
+
     for (size_t i = 0; i < (outWidth * outHeight); i++)
     {
-      result[0 + i * bpp] = remappedValuesRed[source_image[0 + i * bpp]];
-      result[1 + i * bpp] = remappedValuesGreen[source_image[1 + i * bpp]];
-      result[2 + i * bpp] = remappedValuesBlue[source_image[2 + i * bpp]];
-      result[3 + i * bpp] = 255;
+      result[0 + i * bpp] = kernel_histogram_remap_red[i][source_image[0 + i * bpp]];
+      result[1 + i * bpp] = kernel_histogram_remap_green[i][source_image[1 + i * bpp]];
+      result[2 + i * bpp] = kernel_histogram_remap_blue[i][source_image[2 + i * bpp]];
+      result[3 + i * bpp] = source_image[3 + i * bpp];
     }
-    */
   }
 
 }

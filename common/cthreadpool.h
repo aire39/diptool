@@ -2,7 +2,6 @@
 
 #include <vector>
 #include <string>
-#include <cstdint>
 #include <queue>
 #include <mutex>
 #include <condition_variable>
@@ -18,13 +17,15 @@ class cthreadpool
     explicit cthreadpool(size_t n_threads, const std::string & t_pool_name);
     ~cthreadpool();
 
-    void addjob(std::function<void()> job);
+    void addjob(const std::function<void()>& job);
+    void addjob(std::function<void()>&& job) noexcept;
     void waitforthread();
     void ForceCancelThreadWait();
 
-    size_t threadswaiting();
-    size_t threadsinuse();
-    size_t numberofthreads();
+    [[nodiscard]] size_t threadswaiting();
+    [[nodiscard]] size_t threadsinuse();
+    [[nodiscard]] size_t numberofthreads() const;
+    [[nodiscard]] size_t numberofjobs() const;
 
   private:
     void threadpooltask(size_t thread_index);
