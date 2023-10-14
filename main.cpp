@@ -478,6 +478,13 @@ void RenderTask(sf::RenderWindow & window
           spatial_op.ShowSharpenFilterScaling(spatial_filter_menu.ShowSharpenFilterScaling());
         }
 
+        if (spatial_filter_menu.CurrentOperation() == MenuOp_SpatialFilter::HIGHBOOST)
+        {
+          spatial_op.SetUnSharpenConstant(spatial_filter_menu.GetUnsharpConstant());
+          spatial_op.ShowUnSharpenFilter(spatial_filter_menu.ShowUnSharpenFilter());
+          spatial_op.ShowUnSharpenFilterScaling(spatial_filter_menu.ShowUnSharpenFilterScaling());
+        }
+
         spatial_op.ProcessImage(spatial_filter_menu.CurrentOperation()
                                ,source_pixels
                                ,loaded_image.getSize().x
