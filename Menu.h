@@ -16,6 +16,7 @@ class Menu {
     [[nodiscard]] bool IsUpSampleSet() const;
     [[nodiscard]] bool IsVaryingBitsSet() const;
     [[nodiscard]] bool IsHistogramEqualizationSet() const;
+    [[nodiscard]] bool IsSpatialFiltering() const;
     [[nodiscard]] bool IsOutputAsSourceSet() const;
 
   private:

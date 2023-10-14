@@ -24,6 +24,8 @@
 #include "operations/VaryBitsOp.h"
 #include "menus/HistogramEqualizationMenu.h"
 #include "operations/HistogramEqualizationOp.h"
+#include "menus/SpatialFilterMenu.h"
+#include "operations/SpatialFilterOp.h"
 
 #define USE_ON_RESIZING true
 
@@ -236,6 +238,9 @@ void RenderTask(sf::RenderWindow & window
 
   HistogramEqualizationOp histogrameq_op;
   HistogramEqualizationMenu histogrameq_menu;
+
+  SpatialFilterMenu spatial_filter_menu;
+  SpatialFilterOp spatial_op;
 
   Menu menu;
   menu.SetImagePath(image_file_path);
@@ -450,6 +455,30 @@ void RenderTask(sf::RenderWindow & window
 
         const auto & result_image = histogrameq_op.GetImage();
         processed_image.create(histogrameq_op.GetWidth(), histogrameq_op.GetHeight(), result_image.data());
+        processed_texture.loadFromImage(processed_image);
+        processed_sprite = sf::Sprite(processed_texture);
+      }
+    }
+
+    if (menu.IsSpatialFiltering())
+    {
+      spatial_filter_menu.RenderMenu();
+
+      if (spatial_filter_menu.ProcessBegin())
+      {
+        std::vector<uint8_t> source_pixels (loaded_image.getPixelsPtr(), (loaded_image.getPixelsPtr()+(loaded_image.getSize().x * loaded_image.getSize().y * 4)));
+
+        spatial_op.SetKernelSize(spatial_filter_menu.GetKernelX(), spatial_filter_menu.GetKernelY());
+
+        spatial_op.ProcessImage(spatial_filter_menu.CurrentOperation()
+                               ,source_pixels
+                               ,loaded_image.getSize().x
+                               ,loaded_image.getSize().y
+                               ,4
+                               ,0);
+
+        const auto & result_image = spatial_op.GetImage();
+        processed_image.create(spatial_op.GetWidth(), spatial_op.GetHeight(), result_image.data());
         processed_texture.loadFromImage(processed_image);
         processed_sprite = sf::Sprite(processed_texture);
       }
