@@ -23,3 +23,10 @@ enum class MenuOp_HistogramMethod : uint16_t {
   LOCALIZE,
   LOCALIZE_ENCHANCEMENT
 };
+
+enum class MenuOp_SpatialFilter : uint16_t {
+  SMOOTHING = 0,
+  MEDIAN,
+  SHARPENING,
+  HIGHBOOST
+};

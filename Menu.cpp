@@ -54,7 +54,7 @@ void Menu::RenderMenu(sf::Image & image, sf::Texture & texture, sf::Sprite & spr
 
   ImGui::SeparatorText("operations");
 
-  const std::vector<const char*> items_list = {"None", "Downsample", "Upsample", "Varying Bits", "Histogram Equalization"};
+  const std::vector<const char*> items_list = {"None", "Downsample", "Upsample", "Varying Bits", "Histogram Equalization", "Spatial Filtering"};
 
   ImGui::Combo("##operations", &currentItem, items_list.data(), static_cast<int32_t>(items_list.size()));
 
@@ -79,6 +79,11 @@ bool Menu::IsVaryingBitsSet() const
 bool Menu::IsHistogramEqualizationSet() const
 {
   return (currentItem == 4);
+}
+
+bool Menu::IsSpatialFiltering() const
+{
+  return (currentItem == 5);
 }
 
 bool Menu::IsOutputAsSourceSet() const

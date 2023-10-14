@@ -122,6 +122,8 @@ add_executable(diptool
                menus/VaryBitsMenu.h
                menus/HistogramEqualizationMenu.cpp
                menus/HistogramEqualizationMenu.h
+               menus/SpatialFilterMenu.cpp
+               menus/SpatialFilterMenu.h
                operations/DownsampleOp.cpp
                operations/DownsampleOp.h
                operations/UpsampleOp.cpp
@@ -132,6 +134,8 @@ add_executable(diptool
                operations/HistogramOp.h
                operations/HistogramEqualizationOp.cpp
                operations/HistogramEqualizationOp.h
+               operations/SpatialFilterOp.cpp
+               operations/SpatialFilterOp.h
                ${TINYDIALOG}
                ${IMPLOT}
                ${COMMON}
