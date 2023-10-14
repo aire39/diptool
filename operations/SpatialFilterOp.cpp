@@ -28,7 +28,7 @@ std::vector<uint8_t> SpatialFilterOp::ProcessImage(MenuOp_SpatialFilter operatio
       break;
 
     case MenuOp_SpatialFilter::HIGHBOOST:
-      spdlog::warn("high-boost not implemented");
+      HighBoostFilter(source_image, width, height, bpp);
       break;
 
     default:
@@ -71,6 +71,11 @@ void SpatialFilterOp::SetSharpenUseFullKernel(bool use_full_kernel)
   sharpUseFullKernel = use_full_kernel;
 }
 
+void SpatialFilterOp::SetUnSharpenConstant(float unsharp_const)
+{
+  unsharpConstant = unsharp_const;
+}
+
 void SpatialFilterOp::ShowSharpenFilter(bool show_sharpen_filter)
 {
   showSharpenFilter = show_sharpen_filter;
@@ -79,6 +84,16 @@ void SpatialFilterOp::ShowSharpenFilter(bool show_sharpen_filter)
 void SpatialFilterOp::ShowSharpenFilterScaling(bool show_sharpen_filter)
 {
   showSharpenFilterScaling = show_sharpen_filter;
+}
+
+void SpatialFilterOp::ShowUnSharpenFilter(bool show_unsharpen_filter)
+{
+  showUnSharpenFilter = show_unsharpen_filter;
+}
+
+void SpatialFilterOp::ShowUnSharpenFilterScaling(bool show_unsharpen_filter)
+{
+  showUnSharpenFilterScaling = show_unsharpen_filter;
 }
 
 float SpatialFilterOp::ConvolutionValue(const std::vector<uint8_t> & source
@@ -321,6 +336,50 @@ void SpatialFilterOp::SharpenFilter(const std::vector<uint8_t> & source_image, u
         result[(j*bpp) + (i*width*bpp) + 1] = static_cast<uint8_t>(std::clamp(static_cast<float>(source_image[(j*bpp) + (i*width*bpp) + 1]) + filter_value_green + sharpen_filter_scaling, 0.0f, 255.0f));
         result[(j*bpp) + (i*width*bpp) + 2] = static_cast<uint8_t>(std::clamp(static_cast<float>(source_image[(j*bpp) + (i*width*bpp) + 2]) + filter_value_blue + sharpen_filter_scaling, 0.0f, 255.0f));
         result[(j*bpp) + (i*width*bpp) + 3] = static_cast<uint8_t>(std::clamp(static_cast<float>(source_image[(j*bpp) + (i*width*bpp) + 3]) + filter_alpha_value + sharpen_filter_scaling, 0.0f, 255.0f));
+      }
+    }
+  }
+}
+
+void SpatialFilterOp::HighBoostFilter(const std::vector<uint8_t> & source_image, uint32_t width, uint32_t height, int32_t bpp)
+{
+  spdlog::info("begin spatial filter: high-boost");
+
+  std::vector<float> unsharp_mask (width * height * bpp);
+
+  SmoothingFilter(source_image, width, height, bpp);
+  std::vector<uint8_t> blur_image = result;
+
+  float unsharp_filter_scaling = showUnSharpenFilterScaling ? 128.0f : 0.0f;
+
+  for (size_t i=0; i<height; i++)
+  {
+    for (size_t j = 0; j < width; j++)
+    {
+      unsharp_mask[((j * bpp) + (i * width * bpp)) + 0] = unsharpConstant * (static_cast<float>(source_image[((j * bpp) + (i * width * bpp)) + 0]) - static_cast<float>(blur_image[((j * bpp) + (i * width * bpp)) + 0]));
+      unsharp_mask[((j * bpp) + (i * width * bpp)) + 1] = unsharpConstant * (static_cast<float>(source_image[((j * bpp) + (i * width * bpp)) + 1]) - static_cast<float>(blur_image[((j * bpp) + (i * width * bpp)) + 1]));
+      unsharp_mask[((j * bpp) + (i * width * bpp)) + 2] = unsharpConstant * (static_cast<float>(source_image[((j * bpp) + (i * width * bpp)) + 2]) - static_cast<float>(blur_image[((j * bpp) + (i * width * bpp)) + 2]));
+      unsharp_mask[((j * bpp) + (i * width * bpp)) + 3] = unsharpConstant * (static_cast<float>(source_image[((j * bpp) + (i * width * bpp)) + 3]) - static_cast<float>(blur_image[((j * bpp) + (i * width * bpp)) + 3]));
+    }
+  }
+
+  for (size_t i=0; i<height; i++)
+  {
+    for (size_t j = 0; j < width; j++)
+    {
+      if (!showUnSharpenFilter)
+      {
+        result[((j * bpp) + (i * width * bpp)) + 0] = static_cast<uint8_t>(std::clamp(static_cast<float>(source_image[((j * bpp) + (i * width * bpp)) + 0]) + static_cast<float>(unsharp_mask[((j * bpp) + (i * width * bpp)) + 0]), 0.0f, 255.0f));
+        result[((j * bpp) + (i * width * bpp)) + 1] = static_cast<uint8_t>(std::clamp(static_cast<float>(source_image[((j * bpp) + (i * width * bpp)) + 1]) + static_cast<float>(unsharp_mask[((j * bpp) + (i * width * bpp)) + 1]), 0.0f, 255.0f));
+        result[((j * bpp) + (i * width * bpp)) + 2] = static_cast<uint8_t>(std::clamp(static_cast<float>(source_image[((j * bpp) + (i * width * bpp)) + 2]) + static_cast<float>(unsharp_mask[((j * bpp) + (i * width * bpp)) + 2]), 0.0f, 255.0f));
+        result[((j * bpp) + (i * width * bpp)) + 3] = static_cast<uint8_t>(std::clamp(static_cast<float>(source_image[((j * bpp) + (i * width * bpp)) + 3]) + static_cast<float>(unsharp_mask[((j * bpp) + (i * width * bpp)) + 3]), 0.0f, 255.0f));
+      }
+      else
+      {
+        result[((j * bpp) + (i * width * bpp)) + 0] = static_cast<uint8_t>(std::clamp(unsharp_mask[((j * bpp) + (i * width * bpp)) + 0] + unsharp_filter_scaling, 0.0f, 255.0f));
+        result[((j * bpp) + (i * width * bpp)) + 1] = static_cast<uint8_t>(std::clamp(unsharp_mask[((j * bpp) + (i * width * bpp)) + 1] + unsharp_filter_scaling, 0.0f, 255.0f));
+        result[((j * bpp) + (i * width * bpp)) + 2] = static_cast<uint8_t>(std::clamp(unsharp_mask[((j * bpp) + (i * width * bpp)) + 2] + unsharp_filter_scaling, 0.0f, 255.0f));
+        result[((j * bpp) + (i * width * bpp)) + 3] = 255;
       }
     }
   }

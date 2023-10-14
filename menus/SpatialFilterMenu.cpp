@@ -88,18 +88,18 @@ void SpatialFilterMenu::RenderMenu()
 
   if (CurrentOperation() == MenuOp_SpatialFilter::SHARPENING)
   {
-    ImGui::TextColored(ImVec4(0.75, 0.5, 0.9, 1.0f), "kernel options:");
+    ImGui::TextColored(ImVec4(0.75, 0.5, 0.9, 1.0f), "filter options:");
 
     ImGui::Text("kernel full use:");
     ImGui::SameLine();
     ImGui::Checkbox("##sharp_full_kernel", &isSharpUsingFullKernel);
-    ImGui::Text("show filter:");
+    ImGui::Text("show sharp filter:");
     ImGui::SameLine();
     ImGui::Checkbox("##sharp_show_filter", &showSharpenFilter);
 
     if (showSharpenFilter)
     {
-      ImGui::Text("show filter with scaling:");
+      ImGui::Text("show sharp filter with scaling:");
       ImGui::SameLine();
       ImGui::Checkbox("##sharp_show_filter_scaling", &showSharpenFilterScaling);
     }
@@ -108,6 +108,26 @@ void SpatialFilterMenu::RenderMenu()
 
     ImGui::TextColored(ImVec4(0.75, 0.5, 0.9, 1.0f), "sharpen constant (C):");
     ImGui::InputFloat("##sharp_const", &sharpenConstant, 0.1f, 1.0f, "%.3f", ImGuiInputTextFlags_::ImGuiInputTextFlags_CharsDecimal | ImGuiInputTextFlags_::ImGuiInputTextFlags_AutoSelectAll);
+  }
+
+  if (CurrentOperation() == MenuOp_SpatialFilter::HIGHBOOST)
+  {
+    ImGui::TextColored(ImVec4(0.75, 0.5, 0.9, 1.0f), "filter options:");
+    ImGui::Text("show unsharp mask filter:");
+    ImGui::SameLine();
+    ImGui::Checkbox("##unsharp_show_filter", &showUnSharpenFilter);
+
+    if (showUnSharpenFilter)
+    {
+      ImGui::Text("show unsharp mask filter with scaling:");
+      ImGui::SameLine();
+      ImGui::Checkbox("##unsharp_show_filter_scaling", &showUnSharpenFilterScaling);
+    }
+
+    ImGui::TextColored(ImVec4(0.75, 0.5, 0.9, 1.0f), "unsharp constant (K):");
+    ImGui::InputFloat("##unsharp_const", &unsharpConstant, 0.1f, 1.0f, "%.3f", ImGuiInputTextFlags_::ImGuiInputTextFlags_CharsDecimal | ImGuiInputTextFlags_::ImGuiInputTextFlags_AutoSelectAll);
+
+    std::clamp(unsharpConstant, 0.0f, std::numeric_limits<float>::max());
   }
 
   ImGui::NewLine();
@@ -171,6 +191,11 @@ float SpatialFilterMenu::GetSharpenConstant() const
   return sharpenConstant;
 }
 
+float SpatialFilterMenu::GetUnsharpConstant() const
+{
+  return unsharpConstant;
+}
+
 bool SpatialFilterMenu::IsSharpenFullUse() const
 {
   return isSharpUsingFullKernel;
@@ -184,4 +209,14 @@ bool SpatialFilterMenu::ShowSharpenFilter() const
 bool SpatialFilterMenu::ShowSharpenFilterScaling() const
 {
   return showSharpenFilterScaling;
+}
+
+bool SpatialFilterMenu::ShowUnSharpenFilter() const
+{
+  return showUnSharpenFilter;
+}
+
+bool SpatialFilterMenu::ShowUnSharpenFilterScaling() const
+{
+  return showUnSharpenFilterScaling;
 }
