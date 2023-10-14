@@ -86,6 +86,32 @@ void SpatialFilterMenu::RenderMenu()
 
   ImGui::NewLine();
 
+  if (CurrentOperation() == MenuOp_SpatialFilter::SHARPENING)
+  {
+    ImGui::TextColored(ImVec4(0.75, 0.5, 0.9, 1.0f), "kernel options:");
+
+    ImGui::Text("kernel full use:");
+    ImGui::SameLine();
+    ImGui::Checkbox("##sharp_full_kernel", &isSharpUsingFullKernel);
+    ImGui::Text("show filter:");
+    ImGui::SameLine();
+    ImGui::Checkbox("##sharp_show_filter", &showSharpenFilter);
+
+    if (showSharpenFilter)
+    {
+      ImGui::Text("show filter with scaling:");
+      ImGui::SameLine();
+      ImGui::Checkbox("##sharp_show_filter_scaling", &showSharpenFilterScaling);
+    }
+
+    ImGui::NewLine();
+
+    ImGui::TextColored(ImVec4(0.75, 0.5, 0.9, 1.0f), "sharpen constant (C):");
+    ImGui::InputFloat("##sharp_const", &sharpenConstant, 0.1f, 1.0f, "%.3f", ImGuiInputTextFlags_::ImGuiInputTextFlags_CharsDecimal | ImGuiInputTextFlags_::ImGuiInputTextFlags_AutoSelectAll);
+  }
+
+  ImGui::NewLine();
+
   if(ButtonCenteredOnLine("Process"))
   {
     processBegin = true;
@@ -138,4 +164,24 @@ int32_t SpatialFilterMenu::GetKernelX() const
 int32_t SpatialFilterMenu::GetKernelY() const
 {
   return kernelY;
+}
+
+float SpatialFilterMenu::GetSharpenConstant() const
+{
+  return sharpenConstant;
+}
+
+bool SpatialFilterMenu::IsSharpenFullUse() const
+{
+  return isSharpUsingFullKernel;
+}
+
+bool SpatialFilterMenu::ShowSharpenFilter() const
+{
+  return showSharpenFilter;
+}
+
+bool SpatialFilterMenu::ShowSharpenFilterScaling() const
+{
+  return showSharpenFilterScaling;
 }

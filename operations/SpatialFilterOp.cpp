@@ -24,7 +24,7 @@ std::vector<uint8_t> SpatialFilterOp::ProcessImage(MenuOp_SpatialFilter operatio
       break;
 
     case MenuOp_SpatialFilter::SHARPENING:
-      spdlog::warn("sharpening not implemented");
+      SharpenFilter(source_image, width, height, bpp);
       break;
 
     case MenuOp_SpatialFilter::HIGHBOOST:
@@ -59,6 +59,26 @@ void SpatialFilterOp::SetKernelSize(int32_t kernel_x, int32_t kernel_y)
 {
   kernelX = kernel_x;
   kernelY = kernel_y;
+}
+
+void SpatialFilterOp::SetSharpenConstant(float sharp_const)
+{
+  sharpenConstant = sharp_const;
+}
+
+void SpatialFilterOp::SetSharpenUseFullKernel(bool use_full_kernel)
+{
+  sharpUseFullKernel = use_full_kernel;
+}
+
+void SpatialFilterOp::ShowSharpenFilter(bool show_sharpen_filter)
+{
+  showSharpenFilter = show_sharpen_filter;
+}
+
+void SpatialFilterOp::ShowSharpenFilterScaling(bool show_sharpen_filter)
+{
+  showSharpenFilterScaling = show_sharpen_filter;
 }
 
 float SpatialFilterOp::ConvolutionValue(const std::vector<uint8_t> & source
@@ -239,6 +259,69 @@ void SpatialFilterOp::MedianFilter(const std::vector<uint8_t> & source_image, ui
       result[(j*bpp) + (i*width*bpp) + 1] = static_cast<uint8_t>(filter_value_green);
       result[(j*bpp) + (i*width*bpp) + 2] = static_cast<uint8_t>(filter_value_blue);
       result[(j*bpp) + (i*width*bpp) + 3] = static_cast<uint8_t>(filter_alpha_value);
+    }
+  }
+}
+
+void SpatialFilterOp::SharpenFilter(const std::vector<uint8_t> & source_image, uint32_t width, uint32_t height, int32_t bpp)
+{
+  spdlog::info("begin spatial filter: sharpening");
+  outWidth = static_cast<int32_t>(width);
+  outHeight = static_cast<int32_t>(height);
+
+  std::vector<uint8_t> laplacian_image ((width * height * bpp), 0.0f);
+  std::vector<float> laplacian_kernel ((kernelX * kernelY), 0.0f);
+  int32_t kernel_x_center = (kernelX - 1) / 2;
+  int32_t kernel_y_center = (kernelY - 1) / 2;
+
+  if (!sharpUseFullKernel)
+  {
+    for (int32_t i = (-kernel_x_center); i < (kernel_x_center + 1); i++)
+    {
+      laplacian_kernel[(kernel_x_center + i) + (kernel_y_center * kernelX)] = 1;
+      laplacian_kernel[(kernel_x_center - i) + (kernel_y_center * kernelX)] = 1;
+
+      laplacian_kernel[kernel_x_center + ((kernel_y_center + i) * kernelX)] = 1;
+      laplacian_kernel[kernel_x_center + ((kernel_y_center - i) * kernelX)] = 1;
+    }
+
+    laplacian_kernel[kernel_x_center + (kernel_y_center * kernelX)] = -(static_cast<float>(kernelX - 1) +
+                                                                        static_cast<float>(kernelY - 1));
+  }
+  else
+  {
+    std::fill(laplacian_kernel.begin(), laplacian_kernel.end(), 1.0f);
+    laplacian_kernel[kernel_x_center + (kernel_y_center * kernelX)] = -(static_cast<float>(kernelX * kernelY) - 1.0f);
+  }
+
+  constexpr float kernel_div = 1.0f;
+
+  float sharpen_filter_scaling = showSharpenFilterScaling ? 128.0f : 0.0f;
+
+  for (size_t i=0; i<height; i++)
+  {
+    for (size_t j=0; j<width; j++)
+    {
+      float filter_value_red = std::clamp(ConvolutionValue(source_image, j, i, width, height, 0, 0, bpp, laplacian_kernel, kernelX, kernelY, kernel_div) * sharpenConstant, -255.0f, 255.0f);
+      float filter_value_green = std::clamp(ConvolutionValue(source_image, j, i, width, height, 1, 0, bpp, laplacian_kernel, kernelX, kernelY, kernel_div) * sharpenConstant, -255.0f, 255.0f);
+      float filter_value_blue = std::clamp(ConvolutionValue(source_image, j, i, width, height, 2, 0, bpp, laplacian_kernel, kernelX, kernelY, kernel_div) * sharpenConstant, -255.0f, 255.0f);
+      float filter_alpha_value = std::clamp(ConvolutionValue(source_image, j, i, width, height, 3, 0, bpp, laplacian_kernel, kernelX, kernelY, kernel_div * sharpenConstant), -255.0f, 255.0f);
+
+
+      if (showSharpenFilter)
+      {
+        result[(j*bpp) + (i*width*bpp) + 0] = static_cast<uint8_t>(std::clamp(filter_value_red + sharpen_filter_scaling, 0.0f, 255.0f));
+        result[(j*bpp) + (i*width*bpp) + 1] = static_cast<uint8_t>(std::clamp(filter_value_green + sharpen_filter_scaling, 0.0f, 255.0f));
+        result[(j*bpp) + (i*width*bpp) + 2] = static_cast<uint8_t>(std::clamp(filter_value_blue + sharpen_filter_scaling, 0.0f, 255.0f));
+        result[(j*bpp) + (i*width*bpp) + 3] = static_cast<uint8_t>(std::clamp(filter_alpha_value + 255.0f, 0.0f, 255.0f));
+      }
+      else
+      {
+        result[(j*bpp) + (i*width*bpp) + 0] = static_cast<uint8_t>(std::clamp(static_cast<float>(source_image[(j*bpp) + (i*width*bpp) + 0]) + filter_value_red + sharpen_filter_scaling, 0.0f, 255.0f));
+        result[(j*bpp) + (i*width*bpp) + 1] = static_cast<uint8_t>(std::clamp(static_cast<float>(source_image[(j*bpp) + (i*width*bpp) + 1]) + filter_value_green + sharpen_filter_scaling, 0.0f, 255.0f));
+        result[(j*bpp) + (i*width*bpp) + 2] = static_cast<uint8_t>(std::clamp(static_cast<float>(source_image[(j*bpp) + (i*width*bpp) + 2]) + filter_value_blue + sharpen_filter_scaling, 0.0f, 255.0f));
+        result[(j*bpp) + (i*width*bpp) + 3] = static_cast<uint8_t>(std::clamp(static_cast<float>(source_image[(j*bpp) + (i*width*bpp) + 3]) + filter_alpha_value + sharpen_filter_scaling, 0.0f, 255.0f));
+      }
     }
   }
 }

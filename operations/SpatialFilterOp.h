@@ -22,6 +22,10 @@ class SpatialFilterOp
     [[nodiscard]] int32_t GetHeight() const;
 
     void SetKernelSize(int32_t kernel_x, int32_t kernel_y);
+    void SetSharpenConstant(float sharp_const);
+    void SetSharpenUseFullKernel(bool use_full_kernel);
+    void ShowSharpenFilter(bool show_sharpen_filter);
+    void ShowSharpenFilterScaling(bool show_sharpen_filter);
 
   private:
 
@@ -52,10 +56,15 @@ class SpatialFilterOp
 
     void SmoothingFilter(const std::vector<uint8_t> & source_image, uint32_t width, uint32_t height, int32_t bpp);
     void MedianFilter(const std::vector<uint8_t> & source_image, uint32_t width, uint32_t height, int32_t bpp);
+    void SharpenFilter(const std::vector<uint8_t> & source_image, uint32_t width, uint32_t height, int32_t bpp);
 
     std::vector<uint8_t> result;
     int32_t outWidth = 0;
     int32_t outHeight = 0;
     int32_t kernelX = 3;
     int32_t kernelY = 3;
+    float sharpenConstant = -1.0f;
+    bool sharpUseFullKernel = false;
+    bool showSharpenFilter = false;
+    bool showSharpenFilterScaling = true;
 };
