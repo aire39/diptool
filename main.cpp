@@ -470,6 +470,14 @@ void RenderTask(sf::RenderWindow & window
 
         spatial_op.SetKernelSize(spatial_filter_menu.GetKernelX(), spatial_filter_menu.GetKernelY());
 
+        if (spatial_filter_menu.CurrentOperation() == MenuOp_SpatialFilter::SHARPENING)
+        {
+          spatial_op.SetSharpenConstant(spatial_filter_menu.GetSharpenConstant());
+          spatial_op.SetSharpenUseFullKernel(spatial_filter_menu.IsSharpenFullUse());
+          spatial_op.ShowSharpenFilter(spatial_filter_menu.ShowSharpenFilter());
+          spatial_op.ShowSharpenFilterScaling(spatial_filter_menu.ShowSharpenFilterScaling());
+        }
+
         spatial_op.ProcessImage(spatial_filter_menu.CurrentOperation()
                                ,source_pixels
                                ,loaded_image.getSize().x
