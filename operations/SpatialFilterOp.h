@@ -38,7 +38,20 @@ class SpatialFilterOp
                                  ,int32_t kernel_height
                                  ,float kernel_div);
 
+    static float MedianValue(const std::vector<uint8_t> & source
+                            ,int32_t x
+                            ,int32_t y
+                            ,int32_t source_width
+                            ,int32_t source_height
+                            ,int32_t offset
+                            ,int32_t sum_count
+                            ,int32_t bpp
+                            ,int32_t kernel_width
+                            ,int32_t kernel_height
+                            ,float median_scale_factor);
+
     void SmoothingFilter(const std::vector<uint8_t> & source_image, uint32_t width, uint32_t height, int32_t bpp);
+    void MedianFilter(const std::vector<uint8_t> & source_image, uint32_t width, uint32_t height, int32_t bpp);
 
     std::vector<uint8_t> result;
     int32_t outWidth = 0;
