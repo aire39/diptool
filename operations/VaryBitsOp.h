@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <vector>
 #include <set>
+#include <array>
 
 class VaryBitsOp
 {
@@ -25,6 +26,7 @@ class VaryBitsOp
     [[nodiscard]] std::set<uint32_t> GetUniquePixelValues() const;
 
     void SetUseColorChannels(bool use_color_channels);
+    void SetShowBitPlanes(const std::array<bool, 8> & show_bit_planes);
 
   private:
     int32_t outWidth = 0;
@@ -32,6 +34,7 @@ class VaryBitsOp
     std::set<uint32_t> uniquePixelValues;
     std::vector<uint8_t> result;
     bool useColor = false;
+    std::array<bool, 8> showBitPlanes = {true};
 
     void BitLevelAlgorithm(const std::vector<uint8_t> & source_image
                           ,uint32_t width
@@ -39,6 +42,13 @@ class VaryBitsOp
                           ,uint8_t bpp
                           ,uint32_t bit_level
                           ,bool bit_contrast);
+
+    void BitLevelRemovalAlgorithm(const std::vector<uint8_t> & source_image
+                                 ,uint32_t width
+                                 ,uint32_t height
+                                 ,uint8_t bpp
+                                 ,uint32_t bit_level
+                                 ,bool bit_contrast);
 
 
 };
