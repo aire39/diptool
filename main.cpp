@@ -506,6 +506,18 @@ void RenderTask(sf::RenderWindow & window
       }
     }
 
+    if (menu.IsSavingOutput())
+    {
+      if (processed_image.saveToFile("output.png"))
+      {
+        spdlog::info("save processed image");
+      }
+      else
+      {
+        spdlog::warn("output buffer was empty! no processed image to save!");
+      }
+    }
+
     // Render
     window.clear(sf::Color::Black);
     window.draw(bg_image_plane);

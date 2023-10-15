@@ -6,6 +6,24 @@
 
 #include <tinyfiledialogs/tinyfiledialogs.h>
 
+namespace {
+  bool ButtonCenteredOnLine(const char* label)
+  {
+    constexpr float alignment = 0.5f;
+
+    ImGuiStyle& style = ImGui::GetStyle();
+
+    float size = ImGui::CalcTextSize(label).x + style.FramePadding.x * 2.0f;
+    float avail = ImGui::GetContentRegionAvail().x;
+
+    float off = (avail - size) * alignment;
+    if (off > 0.0f)
+      ImGui::SetCursorPosX(ImGui::GetCursorPosX() + off);
+
+    return ImGui::Button(label);
+  }
+}
+
 void Menu::SetImagePath(std::string image_path)
 {
   imageFilePath = std::move(image_path);
@@ -58,6 +76,13 @@ void Menu::RenderMenu(sf::Image & image, sf::Texture & texture, sf::Sprite & spr
 
   ImGui::Combo("##operations", &currentItem, items_list.data(), static_cast<int32_t>(items_list.size()));
 
+  ImGui::NewLine();
+
+  if (ButtonCenteredOnLine("Save Output"))
+  {
+    saveOutput = true;
+  }
+
   ImGui::End();
 }
 
@@ -89,4 +114,11 @@ bool Menu::IsSpatialFiltering() const
 bool Menu::IsOutputAsSourceSet() const
 {
   return outputAsSource;
+}
+
+bool Menu::IsSavingOutput()
+{
+  bool tmp_save = saveOutput;
+  saveOutput = false;
+  return tmp_save;
 }

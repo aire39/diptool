@@ -18,9 +18,11 @@ class Menu {
     [[nodiscard]] bool IsHistogramEqualizationSet() const;
     [[nodiscard]] bool IsSpatialFiltering() const;
     [[nodiscard]] bool IsOutputAsSourceSet() const;
+    bool IsSavingOutput();
 
   private:
     int32_t currentItem = 0;
     bool outputAsSource = true;
     std::string imageFilePath;
+    bool saveOutput;
 };
