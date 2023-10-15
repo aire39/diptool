@@ -33,6 +33,7 @@ void VaryBitsMenu::RenderMenu()
   ImGui::NewLine();
 
   ImGui::Checkbox("contrast bit shift", &shiftBitsContrast);
+  ImGui::Checkbox("use color channels", &useColor);
 
   if (ButtonCenteredOnLine("save image"))
   {
@@ -61,4 +62,9 @@ bool VaryBitsMenu::ProcessBegin()
   }
 
   return should_process;
+}
+
+bool VaryBitsMenu::UseColorChannels() const
+{
+  return useColor;
 }

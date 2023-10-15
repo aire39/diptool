@@ -112,6 +112,11 @@ std::set<uint32_t> VaryBitsOp::GetUniquePixelValues() const
   return uniquePixelValues;
 }
 
+void VaryBitsOp::SetUseColorChannels(bool use_color_channels)
+{
+  useColor = use_color_channels;
+}
+
 void VaryBitsOp::BitLevelAlgorithm(const std::vector<uint8_t> & source_image
                                   ,uint32_t width
                                   ,uint32_t height
@@ -140,21 +145,43 @@ void VaryBitsOp::BitLevelAlgorithm(const std::vector<uint8_t> & source_image
                                          ,bpp
                                          ,dest_result);
 
-      uint32_t pixel_value_sum = (pixel_rgb_value[0] + pixel_rgb_value[1] + pixel_rgb_value[2]) / 3;
+      if (useColor)
+      {
+        uint16_t unique_gray_value = 0;
+        for (size_t k=0; k<3; k++)
+        {
+          auto pixel_value = pixel_rgb_value[k];
 
-      auto gray_pixel = static_cast<uint8_t>(pixel_value_sum);
+          int32_t shift_value = (0x80 >> bits_to_shift);
 
-      int32_t shift_value = (0x80 >> bits_to_shift);
+          uint8_t check = (pixel_value & shift_value);
+          float value = (check > 0) ? 1.0f : 0.0f;
+          value = bit_contrast ? (value * 255.0f) : static_cast<float>((static_cast<uint8_t>(1.0f * static_cast<float>(pixel_value)) >> bits_to_shift) << bits_to_shift);
 
-      uint8_t check = (gray_pixel & shift_value);
-      float value = (check > 0) ? 1.0f : 0.0f;
-      value = bit_contrast ? (value * 255.0f) : static_cast<float>((static_cast<uint8_t>(1.0f * static_cast<float>(gray_pixel)) >> bits_to_shift) << bits_to_shift);
+          pixel_rgb_value[k] = static_cast<uint8_t>(value);
+          unique_gray_value += pixel_rgb_value[k];
+        }
 
-      pixel_rgb_value[0] = static_cast<uint8_t>(value);
-      pixel_rgb_value[1] = static_cast<uint8_t>(value);
-      pixel_rgb_value[2] = static_cast<uint8_t>(value);
+        unique_gray_value /= 3;
 
-      uniquePixelValues.emplace(value);
+        uniquePixelValues.emplace(static_cast<uint8_t>(unique_gray_value));
+      }
+      else
+      {
+        uint32_t pixel_value_sum = (pixel_rgb_value[0] + pixel_rgb_value[1] + pixel_rgb_value[2]) / 3;
+
+        auto gray_pixel = static_cast<uint8_t>(pixel_value_sum);
+
+        int32_t shift_value = (0x80 >> bits_to_shift);
+
+        uint8_t check = (gray_pixel & shift_value);
+        float value = (check > 0) ? 1.0f : 0.0f;
+        value = bit_contrast ? (value * 255.0f) : static_cast<float>((static_cast<uint8_t>(1.0f * static_cast<float>(gray_pixel)) >> bits_to_shift) << bits_to_shift);
+
+        pixel_rgb_value[0] = static_cast<uint8_t>(value);
+        pixel_rgb_value[1] = static_cast<uint8_t>(value);
+        pixel_rgb_value[2] = static_cast<uint8_t>(value);
+      }
 
       set_pixel(j
                ,i

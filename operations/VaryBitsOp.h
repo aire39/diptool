@@ -24,11 +24,14 @@ class VaryBitsOp
 
     [[nodiscard]] std::set<uint32_t> GetUniquePixelValues() const;
 
+    void SetUseColorChannels(bool use_color_channels);
+
   private:
     int32_t outWidth = 0;
     int32_t outHeight = 0;
     std::set<uint32_t> uniquePixelValues;
     std::vector<uint8_t> result;
+    bool useColor = false;
 
     void BitLevelAlgorithm(const std::vector<uint8_t> & source_image
                           ,uint32_t width
