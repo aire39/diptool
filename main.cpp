@@ -340,7 +340,7 @@ void RenderTask(sf::RenderWindow & window
     {
       varyingbits_menu.RenderMenu();
 
-      if ((current_bit_level != varyingbits_menu.BitScale()))
+      if (((current_bit_level != varyingbits_menu.BitScale()) || varyingbits_menu.ForceBitScaleUpdate()) && !varyingbits_menu.ShowHidePlaneMode())
       {
         current_bit_level = varyingbits_menu.BitScale();
 
@@ -357,14 +357,19 @@ void RenderTask(sf::RenderWindow & window
 
       if (varyingbits_menu.ProcessBegin())
       {
-        if (processed_image.saveToFile("output.png"))
-        {
-          spdlog::info("output buffer was written!");
-        }
-        else
-        {
-          spdlog::warn("output buffer was empty!");
-        }
+        varyingbits_op.SetShowBitPlanes(varyingbits_menu.ShowBitPlanes());
+
+        current_bit_level = varyingbits_menu.BitScale();
+
+        varyingbits_op.SetUseColorChannels(varyingbits_menu.UseColorChannels());
+
+        std::vector<uint8_t> source_pixels (loaded_image.getPixelsPtr(), (loaded_image.getPixelsPtr()+(loaded_image.getSize().x * loaded_image.getSize().y * 4)));
+        varyingbits_op.ProcessImage(-1, varyingbits_menu.ShiftBitsForContrast(), source_pixels, loaded_image.getSize().x, loaded_image.getSize().y, 4);
+
+        const auto & result_image = varyingbits_op.GetImage();
+        processed_image.create(varyingbits_op.GetWidth(), varyingbits_op.GetHeight(), result_image.data());
+        processed_texture.loadFromImage(processed_image);
+        processed_sprite = sf::Sprite(processed_texture);
       }
     }
 
