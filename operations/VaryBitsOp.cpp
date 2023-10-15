@@ -142,28 +142,19 @@ void VaryBitsOp::BitLevelAlgorithm(const std::vector<uint8_t> & source_image
 
       uint32_t pixel_value_sum = (pixel_rgb_value[0] + pixel_rgb_value[1] + pixel_rgb_value[2]) / 3;
 
+      auto gray_pixel = static_cast<uint8_t>(pixel_value_sum);
 
+      int32_t shift_value = (0x80 >> bits_to_shift);
 
-      if (bits_to_shift > 0)
-      {
-        auto gray_pixel = static_cast<uint8_t>(pixel_value_sum);
+      uint8_t check = (gray_pixel & shift_value);
+      float value = (check > 0) ? 1.0f : 0.0f;
+      value = bit_contrast ? (value * 255.0f) : static_cast<float>((static_cast<uint8_t>(1.0f * static_cast<float>(gray_pixel)) >> bits_to_shift) << bits_to_shift);
 
-        int32_t shift_value = (0xFF >> bits_to_shift);
+      pixel_rgb_value[0] = static_cast<uint8_t>(value);
+      pixel_rgb_value[1] = static_cast<uint8_t>(value);
+      pixel_rgb_value[2] = static_cast<uint8_t>(value);
 
-        uint8_t check = (gray_pixel & shift_value);
-        uint32_t value = check > 0 ? (gray_pixel & shift_value) : 0;
-        value = bit_contrast ? value << bits_to_shift : value;
-
-        pixel_rgb_value[0] = static_cast<uint8_t>(value);
-        pixel_rgb_value[1] = static_cast<uint8_t>(value);
-        pixel_rgb_value[2] = static_cast<uint8_t>(value);
-
-        uniquePixelValues.emplace(value);
-      }
-      else
-      {
-        uniquePixelValues.emplace(pixel_value_sum);
-      }
+      uniquePixelValues.emplace(value);
 
       set_pixel(j
                ,i
