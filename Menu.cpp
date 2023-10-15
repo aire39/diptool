@@ -45,18 +45,21 @@ void Menu::RenderMenu(sf::Image & image, sf::Texture & texture, sf::Sprite & spr
         ,0
     );
 
-    imageFilePath = std::string(selected_file);
+    if (selected_file)
+    {
+      imageFilePath = std::string(selected_file);
 
-    if(image.loadFromFile(imageFilePath))
-    {
-      spdlog::info("New image loaded");
-      texture.loadFromImage(image);
-      sprite.setTexture(texture, true);
-      sprite.setPosition(8, 8);
-    }
-    else
-    {
-      spdlog::warn("Unable to load image");
+      if(image.loadFromFile(imageFilePath))
+      {
+        spdlog::info("New image loaded");
+        texture.loadFromImage(image);
+        sprite.setTexture(texture, true);
+        sprite.setPosition(8, 8);
+      }
+      else
+      {
+        spdlog::warn("Unable to load image");
+      }
     }
   }
 
