@@ -456,18 +456,19 @@ void HistogramEqualizationOp::LocalizeEnhancementProcess(const std::vector<uint8
         });
       }
     }
-
-    auto work_done = std::async([&](){
-      float work_completed = 0.0f;
-      while(work_completed < 1.0f)
-      {
-        work_completed = (static_cast<float>(outWidth * outHeight) - static_cast<float>(workPool.numberofjobs())) / static_cast<float>(outWidth * outHeight);
-        spdlog::info("histogram work completed: {:.2f}%", work_completed * 100.0f);
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-      }
-    });
-
-    workPool.waitforthread();
-    work_done.wait();
   }
+
+  auto work_done = std::async([&](){
+    float work_completed = 0.0f;
+    while(work_completed < 1.0f)
+    {
+      work_completed = (static_cast<float>(outWidth * outHeight) - static_cast<float>(workPool.numberofjobs())) / static_cast<float>(outWidth * outHeight);
+      spdlog::info("histogram work completed: {:.2f}%", work_completed * 100.0f);
+      std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    }
+  });
+
+  workPool.waitforthread();
+  work_done.wait();
+
 }
