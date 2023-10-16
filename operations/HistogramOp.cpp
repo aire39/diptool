@@ -170,7 +170,7 @@ std::tuple<std::map<int32_t, std::vector<int32_t>>, int32_t, int32_t> HistogramO
       int32_t ii = std::clamp(i, static_cast<int32_t>(0), static_cast<int32_t>(width)-1);
       int32_t jj = std::clamp(j, static_cast<int32_t>(0), static_cast<int32_t>(height)-1);
       int32_t pixel_value = 0;
-      if (sum_count > 1)
+      if (sum_count > 0)
       {
         for (size_t k = 0; k < sum_count; k++)
         {
