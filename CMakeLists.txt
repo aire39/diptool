@@ -50,6 +50,20 @@ execute_process(
 		COMMAND bash ${PROJECT_SOURCE_DIR}/scripts/win-mingw/build-imgui-sfml.sh ${CLEAR_LIBS}
                )
 
+elseif (DEFINED UNIX)
+	message("Using Linux")
+
+execute_process(
+                WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+		COMMAND bash ${PROJECT_SOURCE_DIR}/scripts/linux/build-sfml.sh ${CLEAR_LIBS}
+               )
+
+execute_process(
+                WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+		COMMAND bash ${PROJECT_SOURCE_DIR}/scripts/linux/build-imgui-sfml.sh ${CLEAR_LIBS}
+               )
+
+
 elseif(DEFINED WIN32 AND DEFINED MSVC)
 message("Using Visual Studio")
 
@@ -78,6 +92,12 @@ if (DEFINED WIN32 AND (DEFINED MSYS OR DEFINED MINGW))
 
 set(SFML_DIR "${PROJECT_SOURCE_DIR}/libs/sfml/sfml-${use_build_type}/lib/cmake/SFML")
 set(ImGui-SFML_DIR "${PROJECT_SOURCE_DIR}/libs/imgui-sfml/imgui-sfml-${use_build_type}/lib/cmake/ImGui-SFML")
+
+elseif (DEFINED UNIX)
+
+set(SFML_DIR "${PROJECT_SOURCE_DIR}/libs/sfml/sfml-${use_build_type}/lib/cmake/SFML")
+set(ImGui-SFML_DIR "${PROJECT_SOURCE_DIR}/libs/imgui-sfml/imgui-sfml-${use_build_type}/lib/cmake/ImGui-SFML")
+
 
 elseif(DEFINED WIN32 AND DEFINED MSVC)
 
