@@ -24,5 +24,5 @@ class Menu {
     int32_t currentItem = 0;
     bool outputAsSource = true;
     std::string imageFilePath;
-    bool saveOutput;
+    bool saveOutput = false;
 };
