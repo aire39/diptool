@@ -149,7 +149,7 @@ void DownsampleOp::DecimateAlgorithm(const std::vector<uint8_t> & source_image
         std::array<uint8_t, 4> pixel_rgb_value = {static_cast<uint8_t>(pixel_rgb_value_0[0])
                                                  ,static_cast<uint8_t>(pixel_rgb_value_0[1])
                                                  ,static_cast<uint8_t>(pixel_rgb_value_0[2])
-                                                 ,static_cast<uint8_t>(pixel_rgb_value_0[2])};
+                                                 ,static_cast<uint8_t>(pixel_rgb_value_0[3])};
 
         set_pixel((j / 2)
                  ,(i / 2)
