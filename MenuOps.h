@@ -28,5 +28,6 @@ enum class MenuOp_SpatialFilter : uint16_t {
   SMOOTHING = 0,
   MEDIAN,
   SHARPENING,
-  HIGHBOOST
+  HIGHBOOST,
+  ARITH_MEAN
 };
