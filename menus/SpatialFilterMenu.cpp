@@ -82,7 +82,7 @@ void SpatialFilterMenu::RenderMenu()
 
   const std::vector<const char*> items_list = {"Smoothing", "Median", "Sharpening (Laplacian)", "High-Boosting"
                                               ,"Arithmetic Mean", "Geometric Mean", "Min", "Max", "Midpoint"
-                                              ,"Harmonic Mean"};
+                                              ,"Harmonic Mean", "Contra-Harmonic Mean"};
   ImGui::Combo("##operations", &currentItem, items_list.data(), static_cast<int32_t>(items_list.size()));
   ImGui::EndGroup();
 
@@ -128,6 +128,16 @@ void SpatialFilterMenu::RenderMenu()
 
     ImGui::TextColored(ImVec4(0.75, 0.5, 0.9, 1.0f), "unsharp constant (K):");
     ImGui::InputFloat("##unsharp_const", &unsharpConstant, 0.1f, 1.0f, "%.3f", ImGuiInputTextFlags_::ImGuiInputTextFlags_CharsDecimal | ImGuiInputTextFlags_::ImGuiInputTextFlags_AutoSelectAll);
+
+    std::clamp(unsharpConstant, 0.0f, std::numeric_limits<float>::max());
+  }
+
+  if (CurrentOperation() == MenuOp_SpatialFilter::CONTRA_HARMONIC_MEAN)
+  {
+    ImGui::TextColored(ImVec4(0.75, 0.5, 0.9, 1.0f), "filter options:");
+
+    ImGui::TextColored(ImVec4(0.75, 0.5, 0.9, 1.0f), "contra-harmonic constant (Q):");
+    ImGui::InputFloat("##contra_hormonic_const", &contraHarminocConstant, 0.1f, 1.0f, "%.3f", ImGuiInputTextFlags_::ImGuiInputTextFlags_CharsDecimal | ImGuiInputTextFlags_::ImGuiInputTextFlags_AutoSelectAll);
 
     std::clamp(unsharpConstant, 0.0f, std::numeric_limits<float>::max());
   }
@@ -186,6 +196,10 @@ MenuOp_SpatialFilter SpatialFilterMenu::CurrentOperation()
       operation = MenuOp_SpatialFilter::HARMONIC_MEAN;
       break;
 
+    case 10:
+      operation = MenuOp_SpatialFilter::CONTRA_HARMONIC_MEAN;
+      break;
+
     default:
       operation = MenuOp_SpatialFilter::SMOOTHING;
       break;
@@ -220,6 +234,11 @@ float SpatialFilterMenu::GetSharpenConstant() const
 float SpatialFilterMenu::GetUnsharpConstant() const
 {
   return unsharpConstant;
+}
+
+float SpatialFilterMenu::GetContraHarminocConstant() const
+{
+  return contraHarminocConstant;
 }
 
 bool SpatialFilterMenu::IsSharpenFullUse() const

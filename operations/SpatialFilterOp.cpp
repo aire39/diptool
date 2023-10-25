@@ -55,6 +55,10 @@ std::vector<uint8_t> SpatialFilterOp::ProcessImage(MenuOp_SpatialFilter operatio
       HarmonicFilter(source_image, width, height, bpp);
       break;
 
+    case MenuOp_SpatialFilter::CONTRA_HARMONIC_MEAN:
+      ContraHarmonicFilter(source_image, width, height, bpp);
+      break;
+
     default:
       spdlog::warn("not a valid filter");
       break;
@@ -108,6 +112,11 @@ void SpatialFilterOp::ShowSharpenFilter(bool show_sharpen_filter)
 void SpatialFilterOp::ShowSharpenFilterScaling(bool show_sharpen_filter)
 {
   showSharpenFilterScaling = show_sharpen_filter;
+}
+
+void SpatialFilterOp::SetContraHarmonicConstant(float q_constant)
+{
+  contraHarmonicConstant = q_constant;
 }
 
 void SpatialFilterOp::ShowUnSharpenFilter(bool show_unsharpen_filter)
@@ -196,6 +205,11 @@ double SpatialFilterOp::ConvolutionValue(const std::vector<uint8_t> & source
           auto tmp = (sum_value * static_cast<double>(kernel[kernel_x_index + (kernel_y_index * kernel_width)]));
           value += (kernel_div / tmp);
         }
+        else if (conv_type == CONV_TYPE::POW)
+        {
+          auto tmp = (sum_value * static_cast<double>(kernel[kernel_x_index + (kernel_y_index * kernel_width)]));
+          value += std::pow(tmp, kernel_div);
+        }
         else // CONV_TYPE::MULT
         {
           value *= (sum_value * static_cast<double>(kernel[kernel_x_index + (kernel_y_index * kernel_width)]));
@@ -228,6 +242,13 @@ double SpatialFilterOp::ConvolutionValue(const std::vector<uint8_t> & source
                         static_cast<double>(kernel[kernel_x_index + (kernel_y_index * kernel_width)]));
 
           value += (kernel_div / tmp);
+        }
+        else if (conv_type == CONV_TYPE::POW)
+        {
+          double tmp = (static_cast<double>(source[(jj * bpp) + (ii * source_width * bpp) + offset]) *
+                        static_cast<double>(kernel[kernel_x_index + (kernel_y_index * kernel_width)]));
+
+          value += std::pow(tmp, kernel_div);
         }
         else // CONV_TYPE::MULT
         {
@@ -633,6 +654,43 @@ void SpatialFilterOp::HarmonicFilter(const std::vector<uint8_t> & source_image, 
       double filter_value_green = static_cast<double>(kernelX * kernelY) / ConvolutionValue(source_image, j, i, width, height, 1, 0, bpp, kernel, kernelX, kernelY, kernel_div, CONV_TYPE::FRAC);
       double filter_value_blue = static_cast<double>(kernelX * kernelY) / ConvolutionValue(source_image, j, i, width, height, 2, 0, bpp, kernel, kernelX, kernelY, kernel_div, CONV_TYPE::FRAC);
       double filter_value_alpha = static_cast<double>(kernelX * kernelY) / ConvolutionValue(source_image, j, i, width, height, 3, 0, bpp, kernel, kernelX, kernelY, kernel_div , CONV_TYPE::FRAC);
+
+      result[(j*bpp) + (i*width*bpp) + 0] = static_cast<uint8_t>(std::clamp(filter_value_red, 0.0, 255.0));
+      result[(j*bpp) + (i*width*bpp) + 1] = static_cast<uint8_t>(std::clamp(filter_value_green, 0.0, 255.0));
+      result[(j*bpp) + (i*width*bpp) + 2] = static_cast<uint8_t>(std::clamp(filter_value_blue, 0.0, 255.0));
+      result[(j*bpp) + (i*width*bpp) + 3] = static_cast<uint8_t>(std::clamp(filter_value_alpha, 0.0, 255.0));
+    }
+  }
+}
+
+void SpatialFilterOp::ContraHarmonicFilter(const std::vector<uint8_t> & source_image, uint32_t width, uint32_t height, int32_t bpp)
+{
+  spdlog::info("begin spatial filter: harmonic");
+
+  outWidth = static_cast<int32_t>(width);
+  outHeight = static_cast<int32_t>(height);
+
+  std::vector<float> kernel (kernelX * kernelY, 1.0f);
+  float q_value = contraHarmonicConstant;
+
+  for (size_t i=0; i<height; i++)
+  {
+    for (size_t j=0; j<width; j++)
+    {
+      double filter_value_red_0 = ConvolutionValue(source_image, j, i, width, height, 0, 0, bpp, kernel, kernelX, kernelY, q_value + 1.0, CONV_TYPE::POW);
+      double filter_value_green_0 = ConvolutionValue(source_image, j, i, width, height, 1, 0, bpp, kernel, kernelX, kernelY, q_value + 1.0, CONV_TYPE::POW);
+      double filter_value_blue_0 = ConvolutionValue(source_image, j, i, width, height, 2, 0, bpp, kernel, kernelX, kernelY, q_value + 1.0, CONV_TYPE::POW);
+      double filter_value_alpha_0 = ConvolutionValue(source_image, j, i, width, height, 3, 0, bpp, kernel, kernelX, kernelY, q_value + 1.0 , CONV_TYPE::POW);
+
+      double filter_value_red_1 = ConvolutionValue(source_image, j, i, width, height, 0, 0, bpp, kernel, kernelX, kernelY, q_value, CONV_TYPE::POW);
+      double filter_value_green_1 = ConvolutionValue(source_image, j, i, width, height, 1, 0, bpp, kernel, kernelX, kernelY, q_value, CONV_TYPE::POW);
+      double filter_value_blue_1 = ConvolutionValue(source_image, j, i, width, height, 2, 0, bpp, kernel, kernelX, kernelY, q_value, CONV_TYPE::POW);
+      double filter_value_alpha_1 = ConvolutionValue(source_image, j, i, width, height, 3, 0, bpp, kernel, kernelX, kernelY, q_value , CONV_TYPE::POW);
+
+      double filter_value_red = filter_value_red_0 / filter_value_red_1;
+       double filter_value_green = filter_value_green_0 / filter_value_green_1;
+      double filter_value_blue = filter_value_blue_0 / filter_value_blue_1;
+      double filter_value_alpha = filter_value_alpha_0 / filter_value_alpha_1;
 
       result[(j*bpp) + (i*width*bpp) + 0] = static_cast<uint8_t>(std::clamp(filter_value_red, 0.0, 255.0));
       result[(j*bpp) + (i*width*bpp) + 1] = static_cast<uint8_t>(std::clamp(filter_value_green, 0.0, 255.0));

@@ -16,6 +16,7 @@ class SpatialFilterMenu
     [[nodiscard]] int32_t GetKernelY() const;
     [[nodiscard]] float GetSharpenConstant() const;
     [[nodiscard]] float GetUnsharpConstant() const;
+    [[nodiscard]] float GetContraHarminocConstant() const;
     [[nodiscard]] bool IsSharpenFullUse() const;
     [[nodiscard]] bool ShowSharpenFilter() const;
     [[nodiscard]] bool ShowSharpenFilterScaling() const;
@@ -30,6 +31,7 @@ class SpatialFilterMenu
     int32_t kernelY = 3;
     float sharpenConstant = -1.0f;
     float unsharpConstant = 1.0f;
+    float contraHarminocConstant = 1.0f;
     bool isKernelUniform = true;
     bool isSharpUsingFullKernel = false;
     bool showSharpenFilter = false;
