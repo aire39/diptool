@@ -80,7 +80,9 @@ void SpatialFilterMenu::RenderMenu()
   ImGui::BeginGroup();
   ImGui::Text("Filter Type:");
 
-  const std::vector<const char*> items_list = {"Smoothing", "Median", "Sharpening (Laplacian)", "High-Boosting", "Arithmetic Mean", "Geometric Mean", "Min", "Max", "Midpoint"};
+  const std::vector<const char*> items_list = {"Smoothing", "Median", "Sharpening (Laplacian)", "High-Boosting"
+                                              ,"Arithmetic Mean", "Geometric Mean", "Min", "Max", "Midpoint"
+                                              ,"Harmonic Mean"};
   ImGui::Combo("##operations", &currentItem, items_list.data(), static_cast<int32_t>(items_list.size()));
   ImGui::EndGroup();
 
@@ -178,6 +180,10 @@ MenuOp_SpatialFilter SpatialFilterMenu::CurrentOperation()
 
     case 8:
       operation = MenuOp_SpatialFilter::MIDPOINT;
+      break;
+
+    case 9:
+      operation = MenuOp_SpatialFilter::HARMONIC_MEAN;
       break;
 
     default:
