@@ -39,6 +39,14 @@ std::vector<uint8_t> SpatialFilterOp::ProcessImage(MenuOp_SpatialFilter operatio
       GeoMeanFilter(source_image, width, height, bpp);
       break;
 
+    case MenuOp_SpatialFilter::MIN:
+      MinFilter(source_image, width, height, bpp);
+      break;
+
+    case MenuOp_SpatialFilter::MAX:
+      MaxFilter(source_image, width, height, bpp);
+      break;
+
     default:
       spdlog::warn("not a valid filter");
       break;
@@ -124,6 +132,10 @@ double SpatialFilterOp::ConvolutionValue(const std::vector<uint8_t> & source
   {
     value = 1.0;
   }
+  else if (conv_type == CONV_TYPE::MIN)
+  {
+    value = 255.0;
+  }
 
   int32_t k_width_centered = (kernel_width - 1) / 2;
   int32_t k_height_centered = (kernel_height - 1) / 2;
@@ -161,6 +173,16 @@ double SpatialFilterOp::ConvolutionValue(const std::vector<uint8_t> & source
         {
           value += (sum_value * static_cast<double>(kernel[kernel_x_index + (kernel_y_index * kernel_width)]));
         }
+        else if (conv_type == CONV_TYPE::MIN)
+        {
+          double tmp = (sum_value * static_cast<double>(kernel[kernel_x_index + (kernel_y_index * kernel_width)]));
+          value = (value > tmp) ? tmp : value;
+        }
+        else if (conv_type == CONV_TYPE::MAX)
+        {
+          double tmp = (sum_value * static_cast<double>(kernel[kernel_x_index + (kernel_y_index * kernel_width)]));
+          value = (value < tmp) ? tmp : value;
+        }
         else // CONV_TYPE::MULT
         {
           value *= (sum_value * static_cast<double>(kernel[kernel_x_index + (kernel_y_index * kernel_width)]));
@@ -172,6 +194,20 @@ double SpatialFilterOp::ConvolutionValue(const std::vector<uint8_t> & source
         {
           value += (static_cast<double>(source[(jj * bpp) + (ii * source_width * bpp) + offset]) *
                     static_cast<double>(kernel[kernel_x_index + (kernel_y_index * kernel_width)]));
+        }
+        else if (conv_type == CONV_TYPE::MIN)
+        {
+          double tmp = (static_cast<double>(source[(jj * bpp) + (ii * source_width * bpp) + offset]) *
+                        static_cast<double>(kernel[kernel_x_index + (kernel_y_index * kernel_width)]));
+
+          value = (value > tmp) ? tmp : value;
+        }
+        else if (conv_type == CONV_TYPE::MAX)
+        {
+          double tmp = (static_cast<double>(source[(jj * bpp) + (ii * source_width * bpp) + offset]) *
+                        static_cast<double>(kernel[kernel_x_index + (kernel_y_index * kernel_width)]));
+
+          value = (value < tmp) ? tmp : value;
         }
         else // CONV_TYPE::MULT
         {
@@ -467,6 +503,60 @@ void SpatialFilterOp::GeoMeanFilter(const std::vector<uint8_t> & source_image, u
       filter_value_green = std::pow(filter_value_green, 1.0 / (static_cast<double>(kernelX * kernelY)));
       filter_value_blue = std::pow(filter_value_blue, 1.0 / (static_cast<double>(kernelX * kernelY)));
       filter_value_alpha = std::pow(filter_value_alpha, 1.0 / (static_cast<double>(kernelX * kernelY)));
+
+      result[(j*bpp) + (i*width*bpp) + 0] = static_cast<uint8_t>(std::clamp(filter_value_red, 0.0, 255.0));
+      result[(j*bpp) + (i*width*bpp) + 1] = static_cast<uint8_t>(std::clamp(filter_value_green, 0.0, 255.0));
+      result[(j*bpp) + (i*width*bpp) + 2] = static_cast<uint8_t>(std::clamp(filter_value_blue, 0.0, 255.0));
+      result[(j*bpp) + (i*width*bpp) + 3] = static_cast<uint8_t>(std::clamp(filter_value_alpha, 0.0, 255.0));
+    }
+  }
+}
+
+void SpatialFilterOp::MinFilter(const std::vector<uint8_t> & source_image, uint32_t width, uint32_t height, int32_t bpp)
+{
+  spdlog::info("begin spatial filter: min");
+
+  outWidth = static_cast<int32_t>(width);
+  outHeight = static_cast<int32_t>(height);
+
+  std::vector<float> kernel (kernelX * kernelY, 1.0f);
+  float kernel_div = 1.0f;
+
+  for (size_t i=0; i<height; i++)
+  {
+    for (size_t j=0; j<width; j++)
+    {
+      double filter_value_red = ConvolutionValue(source_image, j, i, width, height, 0, 0, bpp, kernel, kernelX, kernelY, kernel_div, CONV_TYPE::MIN);
+      double filter_value_green = ConvolutionValue(source_image, j, i, width, height, 1, 0, bpp, kernel, kernelX, kernelY, kernel_div, CONV_TYPE::MIN);
+      double filter_value_blue = ConvolutionValue(source_image, j, i, width, height, 2, 0, bpp, kernel, kernelX, kernelY, kernel_div, CONV_TYPE::MIN);
+      double filter_value_alpha = ConvolutionValue(source_image, j, i, width, height, 3, 0, bpp, kernel, kernelX, kernelY, kernel_div , CONV_TYPE::MIN);
+
+      result[(j*bpp) + (i*width*bpp) + 0] = static_cast<uint8_t>(std::clamp(filter_value_red, 0.0, 255.0));
+      result[(j*bpp) + (i*width*bpp) + 1] = static_cast<uint8_t>(std::clamp(filter_value_green, 0.0, 255.0));
+      result[(j*bpp) + (i*width*bpp) + 2] = static_cast<uint8_t>(std::clamp(filter_value_blue, 0.0, 255.0));
+      result[(j*bpp) + (i*width*bpp) + 3] = static_cast<uint8_t>(std::clamp(filter_value_alpha, 0.0, 255.0));
+    }
+  }
+}
+
+void SpatialFilterOp::MaxFilter(const std::vector<uint8_t> & source_image, uint32_t width, uint32_t height, int32_t bpp)
+{
+  spdlog::info("begin spatial filter: max");
+
+  outWidth = static_cast<int32_t>(width);
+  outHeight = static_cast<int32_t>(height);
+
+  std::vector<float> kernel (kernelX * kernelY, 1.0f);
+  float kernel_div = 1.0f;
+
+  for (size_t i=0; i<height; i++)
+  {
+    for (size_t j=0; j<width; j++)
+    {
+      double filter_value_red = ConvolutionValue(source_image, j, i, width, height, 0, 0, bpp, kernel, kernelX, kernelY, kernel_div, CONV_TYPE::MAX);
+      double filter_value_green = ConvolutionValue(source_image, j, i, width, height, 1, 0, bpp, kernel, kernelX, kernelY, kernel_div, CONV_TYPE::MAX);
+      double filter_value_blue = ConvolutionValue(source_image, j, i, width, height, 2, 0, bpp, kernel, kernelX, kernelY, kernel_div, CONV_TYPE::MAX);
+      double filter_value_alpha = ConvolutionValue(source_image, j, i, width, height, 3, 0, bpp, kernel, kernelX, kernelY, kernel_div , CONV_TYPE::MAX);
 
       result[(j*bpp) + (i*width*bpp) + 0] = static_cast<uint8_t>(std::clamp(filter_value_red, 0.0, 255.0));
       result[(j*bpp) + (i*width*bpp) + 1] = static_cast<uint8_t>(std::clamp(filter_value_green, 0.0, 255.0));
