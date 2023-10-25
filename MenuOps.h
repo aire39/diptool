@@ -33,5 +33,6 @@ enum class MenuOp_SpatialFilter : uint16_t {
   GEO_MEAN,
   MIN,
   MAX,
-  MIDPOINT
+  MIDPOINT,
+  HARMONIC_MEAN
 };
