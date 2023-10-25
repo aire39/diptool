@@ -35,6 +35,10 @@ std::vector<uint8_t> SpatialFilterOp::ProcessImage(MenuOp_SpatialFilter operatio
       ArithMeanFilter(source_image, width, height, bpp);
       break;
 
+    case MenuOp_SpatialFilter::GEO_MEAN:
+      GeoMeanFilter(source_image, width, height, bpp);
+      break;
+
     default:
       spdlog::warn("not a valid filter");
       break;
@@ -100,7 +104,7 @@ void SpatialFilterOp::ShowUnSharpenFilterScaling(bool show_unsharpen_filter)
   showUnSharpenFilterScaling = show_unsharpen_filter;
 }
 
-float SpatialFilterOp::ConvolutionValue(const std::vector<uint8_t> & source
+double SpatialFilterOp::ConvolutionValue(const std::vector<uint8_t> & source
                                        ,int32_t x
                                        ,int32_t y
                                        ,int32_t source_width
@@ -111,9 +115,15 @@ float SpatialFilterOp::ConvolutionValue(const std::vector<uint8_t> & source
                                        ,const std::vector<float> & kernel
                                        ,int32_t kernel_width
                                        ,int32_t kernel_height
-                                       ,float kernel_div)
+                                       ,float kernel_div
+                                       ,CONV_TYPE conv_type)
 {
-  float value = 0.0f;
+  double value = 0.0;
+
+  if (conv_type == CONV_TYPE::MULT)
+  {
+    value = 1.0;
+  }
 
   int32_t k_width_centered = (kernel_width - 1) / 2;
   int32_t k_height_centered = (kernel_height - 1) / 2;
@@ -143,16 +153,31 @@ float SpatialFilterOp::ConvolutionValue(const std::vector<uint8_t> & source
         float sum_value = 0.0f;
         for (int32_t k=0; k<sum_count; k++)
         {
-          sum_value += static_cast<float>(source[(jj * bpp) + (ii * source_width * bpp) + offset + k]);
+          sum_value += static_cast<double>(source[(jj * bpp) + (ii * source_width * bpp) + offset + k]);
         }
-        sum_value /= static_cast<float>(sum_count);
+        sum_value /= static_cast<double>(sum_count);
 
-        value += (sum_value * static_cast<float>(kernel[kernel_x_index + (kernel_y_index * kernel_width)]));
+        if (conv_type == CONV_TYPE::SUM)
+        {
+          value += (sum_value * static_cast<double>(kernel[kernel_x_index + (kernel_y_index * kernel_width)]));
+        }
+        else // CONV_TYPE::MULT
+        {
+          value *= (sum_value * static_cast<double>(kernel[kernel_x_index + (kernel_y_index * kernel_width)]));
+        }
       }
       else
       {
-        value += (static_cast<float>(source[(jj * bpp) + (ii * source_width * bpp) + offset]) *
-                  static_cast<float>(kernel[kernel_x_index + (kernel_y_index * kernel_width)]));
+        if (conv_type == CONV_TYPE::SUM)
+        {
+          value += (static_cast<double>(source[(jj * bpp) + (ii * source_width * bpp) + offset]) *
+                    static_cast<double>(kernel[kernel_x_index + (kernel_y_index * kernel_width)]));
+        }
+        else // CONV_TYPE::MULT
+        {
+          value *= (static_cast<double>(source[(jj * bpp) + (ii * source_width * bpp) + offset]) *
+                    static_cast<double>(kernel[kernel_x_index + (kernel_y_index * kernel_width)]));
+        }
       }
     }
   }
@@ -244,10 +269,10 @@ void SpatialFilterOp::SmoothingFilter(const std::vector<uint8_t> & source_image,
   {
     for (size_t j=0; j<width; j++)
     {
-      float filter_value_red = std::clamp(ConvolutionValue(source_image, j, i, width, height, 0, 0, bpp, smooth_kernel, kernelX, kernelY, smooth_kernel_div), 0.0f, 255.0f);
-      float filter_value_green = std::clamp(ConvolutionValue(source_image, j, i, width, height, 1, 0, bpp, smooth_kernel, kernelX, kernelY, smooth_kernel_div), 0.0f, 255.0f);
-      float filter_value_blue = std::clamp(ConvolutionValue(source_image, j, i, width, height, 2, 0, bpp, smooth_kernel, kernelX, kernelY, smooth_kernel_div), 0.0f, 255.0f);
-      float filter_alpha_value = std::clamp(ConvolutionValue(source_image, j, i, width, height, 3, 0, bpp, smooth_kernel, kernelX, kernelY, smooth_kernel_div), 0.0f, 255.0f);
+      double filter_value_red = std::clamp(ConvolutionValue(source_image, j, i, width, height, 0, 0, bpp, smooth_kernel, kernelX, kernelY, smooth_kernel_div), 0.0, 255.0);
+      double filter_value_green = std::clamp(ConvolutionValue(source_image, j, i, width, height, 1, 0, bpp, smooth_kernel, kernelX, kernelY, smooth_kernel_div), 0.0, 255.0);
+      double filter_value_blue = std::clamp(ConvolutionValue(source_image, j, i, width, height, 2, 0, bpp, smooth_kernel, kernelX, kernelY, smooth_kernel_div), 0.0, 255.0);
+      double filter_alpha_value = std::clamp(ConvolutionValue(source_image, j, i, width, height, 3, 0, bpp, smooth_kernel, kernelX, kernelY, smooth_kernel_div), 0.0, 255.0);
 
       result[(j*bpp) + (i*width*bpp) + 0] = static_cast<uint8_t>(filter_value_red);
       result[(j*bpp) + (i*width*bpp) + 1] = static_cast<uint8_t>(filter_value_green);
@@ -415,6 +440,38 @@ void SpatialFilterOp::ArithMeanFilter(const std::vector<uint8_t> & source_image,
       result[(j*bpp) + (i*width*bpp) + 1] = static_cast<uint8_t>(std::clamp(filter_value_green, 0.0f, 255.0f));
       result[(j*bpp) + (i*width*bpp) + 2] = static_cast<uint8_t>(std::clamp(filter_value_blue, 0.0f, 255.0f));
       result[(j*bpp) + (i*width*bpp) + 3] = static_cast<uint8_t>(std::clamp(filter_value_alpha, 0.0f, 255.0f));
+    }
+  }
+}
+
+void SpatialFilterOp::GeoMeanFilter(const std::vector<uint8_t> & source_image, uint32_t width, uint32_t height, int32_t bpp)
+{
+  spdlog::info("begin spatial filter: geometric mean");
+
+  outWidth = static_cast<int32_t>(width);
+  outHeight = static_cast<int32_t>(height);
+
+  std::vector<float> kernel (kernelX * kernelY, 1.0f);
+  float kernel_div = 1.0f;
+
+  for (size_t i=0; i<height; i++)
+  {
+    for (size_t j=0; j<width; j++)
+    {
+      double filter_value_red = ConvolutionValue(source_image, j, i, width, height, 0, 0, bpp, kernel, kernelX, kernelY, kernel_div, CONV_TYPE::MULT);
+      double filter_value_green = ConvolutionValue(source_image, j, i, width, height, 1, 0, bpp, kernel, kernelX, kernelY, kernel_div, CONV_TYPE::MULT);
+      double filter_value_blue = ConvolutionValue(source_image, j, i, width, height, 2, 0, bpp, kernel, kernelX, kernelY, kernel_div, CONV_TYPE::MULT);
+      double filter_value_alpha = ConvolutionValue(source_image, j, i, width, height, 3, 0, bpp, kernel, kernelX, kernelY, kernel_div , CONV_TYPE::MULT);
+
+      filter_value_red = std::pow(filter_value_red, 1.0 / (static_cast<double>(kernelX * kernelY)));
+      filter_value_green = std::pow(filter_value_green, 1.0 / (static_cast<double>(kernelX * kernelY)));
+      filter_value_blue = std::pow(filter_value_blue, 1.0 / (static_cast<double>(kernelX * kernelY)));
+      filter_value_alpha = std::pow(filter_value_alpha, 1.0 / (static_cast<double>(kernelX * kernelY)));
+
+      result[(j*bpp) + (i*width*bpp) + 0] = static_cast<uint8_t>(std::clamp(filter_value_red, 0.0, 255.0));
+      result[(j*bpp) + (i*width*bpp) + 1] = static_cast<uint8_t>(std::clamp(filter_value_green, 0.0, 255.0));
+      result[(j*bpp) + (i*width*bpp) + 2] = static_cast<uint8_t>(std::clamp(filter_value_blue, 0.0, 255.0));
+      result[(j*bpp) + (i*width*bpp) + 3] = static_cast<uint8_t>(std::clamp(filter_value_alpha, 0.0, 255.0));
     }
   }
 }
