@@ -32,7 +32,7 @@ class SpatialFilterOp
 
   private:
 
-    enum class CONV_TYPE : uint16_t {SUM, MULT};
+    enum class CONV_TYPE : uint16_t {SUM=0, MULT, MIN, MAX};
 
     static double ConvolutionValue(const std::vector<uint8_t> & source
                                  ,int32_t x
@@ -66,6 +66,8 @@ class SpatialFilterOp
     void HighBoostFilter(const std::vector<uint8_t> & source_image, uint32_t width, uint32_t height, int32_t bpp);
     void ArithMeanFilter(const std::vector<uint8_t> & source_image, uint32_t width, uint32_t height, int32_t bpp);
     void GeoMeanFilter(const std::vector<uint8_t> & source_image, uint32_t width, uint32_t height, int32_t bpp);
+    void MinFilter(const std::vector<uint8_t> & source_image, uint32_t width, uint32_t height, int32_t bpp);
+    void MaxFilter(const std::vector<uint8_t> & source_image, uint32_t width, uint32_t height, int32_t bpp);
 
     std::vector<uint8_t> result;
     int32_t outWidth = 0;

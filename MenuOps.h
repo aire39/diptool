@@ -30,5 +30,7 @@ enum class MenuOp_SpatialFilter : uint16_t {
   SHARPENING,
   HIGHBOOST,
   ARITH_MEAN,
-  GEO_MEAN
+  GEO_MEAN,
+  MIN,
+  MAX
 };
