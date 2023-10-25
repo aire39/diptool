@@ -492,6 +492,11 @@ void RenderTask(sf::RenderWindow & window
           spatial_op.ShowUnSharpenFilterScaling(spatial_filter_menu.ShowUnSharpenFilterScaling());
         }
 
+        if (spatial_filter_menu.CurrentOperation() == MenuOp_SpatialFilter::CONTRA_HARMONIC_MEAN)
+        {
+          spatial_op.SetContraHarmonicConstant(spatial_filter_menu.GetContraHarminocConstant());
+        }
+
         spatial_op.ProcessImage(spatial_filter_menu.CurrentOperation()
                                ,source_pixels
                                ,loaded_image.getSize().x
