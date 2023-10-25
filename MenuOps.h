@@ -32,5 +32,6 @@ enum class MenuOp_SpatialFilter : uint16_t {
   ARITH_MEAN,
   GEO_MEAN,
   MIN,
-  MAX
+  MAX,
+  MIDPOINT
 };
