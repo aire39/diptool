@@ -259,7 +259,14 @@ double SpatialFilterOp::ConvolutionValue(const std::vector<uint8_t> & source
     }
   }
 
-  return (value * kernel_div);
+  double final_value = value;
+
+  if (conv_type == CONV_TYPE::SUM)
+  {
+    final_value = (value * kernel_div);
+  }
+
+  return final_value;
 }
 
 float SpatialFilterOp::MedianValue(const std::vector<uint8_t> & source
@@ -665,7 +672,7 @@ void SpatialFilterOp::HarmonicFilter(const std::vector<uint8_t> & source_image, 
 
 void SpatialFilterOp::ContraHarmonicFilter(const std::vector<uint8_t> & source_image, uint32_t width, uint32_t height, int32_t bpp)
 {
-  spdlog::info("begin spatial filter: harmonic");
+  spdlog::info("begin spatial filter: contra-harmonic");
 
   outWidth = static_cast<int32_t>(width);
   outHeight = static_cast<int32_t>(height);
