@@ -28,6 +28,7 @@ class SpatialFilterOp
     void ShowSharpenFilter(bool show_sharpen_filter);
     void ShowSharpenFilterScaling(bool show_sharpen_filter);
     void SetContraHarmonicConstant(float q_constant);
+    void SetAlphaTrimConstant(int32_t d_constant);
     void ShowUnSharpenFilter(bool show_sharpen_filter);
     void ShowUnSharpenFilterScaling(bool show_sharpen_filter);
 
@@ -48,6 +49,18 @@ class SpatialFilterOp
                                  ,int32_t kernel_height
                                  ,float kernel_div
                                  ,CONV_TYPE conv_type = CONV_TYPE::SUM);
+
+    static std::vector<float> CollectValues(const std::vector<uint8_t> & source
+                                           ,int32_t x
+                                           ,int32_t y
+                                           ,int32_t source_width
+                                           ,int32_t source_height
+                                           ,int32_t offset
+                                           ,int32_t sum_count
+                                           ,int32_t bpp
+                                           ,int32_t kernel_width
+                                           ,int32_t kernel_height
+                                           ,float scale_factor);
 
     static float MedianValue(const std::vector<uint8_t> & source
                             ,int32_t x
@@ -72,6 +85,7 @@ class SpatialFilterOp
     void MidPointFilter(const std::vector<uint8_t> & source_image, uint32_t width, uint32_t height, int32_t bpp);
     void HarmonicFilter(const std::vector<uint8_t> & source_image, uint32_t width, uint32_t height, int32_t bpp);
     void ContraHarmonicFilter(const std::vector<uint8_t> & source_image, uint32_t width, uint32_t height, int32_t bpp);
+    void AlphaTrimFilter(const std::vector<uint8_t> & source_image, uint32_t width, uint32_t height, int32_t bpp);
 
     std::vector<uint8_t> result;
     int32_t outWidth = 0;
@@ -81,6 +95,7 @@ class SpatialFilterOp
     float sharpenConstant = -1.0f;
     float unsharpConstant = 1.0f;
     float contraHarmonicConstant = 1.0f;
+    int32_t alphaTrimConstant = 1;
     bool sharpUseFullKernel = false;
     bool showSharpenFilter = false;
     bool showSharpenFilterScaling = true;

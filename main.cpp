@@ -497,6 +497,11 @@ void RenderTask(sf::RenderWindow & window
           spatial_op.SetContraHarmonicConstant(spatial_filter_menu.GetContraHarminocConstant());
         }
 
+        if (spatial_filter_menu.CurrentOperation() == MenuOp_SpatialFilter::ALPHA_TRIM_MEAN)
+        {
+          spatial_op.SetAlphaTrimConstant(spatial_filter_menu.GetAlphaTrimConstant());
+        }
+
         spatial_op.ProcessImage(spatial_filter_menu.CurrentOperation()
                                ,source_pixels
                                ,loaded_image.getSize().x
