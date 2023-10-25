@@ -47,6 +47,10 @@ std::vector<uint8_t> SpatialFilterOp::ProcessImage(MenuOp_SpatialFilter operatio
       MaxFilter(source_image, width, height, bpp);
       break;
 
+    case MenuOp_SpatialFilter::MIDPOINT:
+      MidPointFilter(source_image, width, height, bpp);
+      break;
+
     default:
       spdlog::warn("not a valid filter");
       break;
@@ -557,6 +561,35 @@ void SpatialFilterOp::MaxFilter(const std::vector<uint8_t> & source_image, uint3
       double filter_value_green = ConvolutionValue(source_image, j, i, width, height, 1, 0, bpp, kernel, kernelX, kernelY, kernel_div, CONV_TYPE::MAX);
       double filter_value_blue = ConvolutionValue(source_image, j, i, width, height, 2, 0, bpp, kernel, kernelX, kernelY, kernel_div, CONV_TYPE::MAX);
       double filter_value_alpha = ConvolutionValue(source_image, j, i, width, height, 3, 0, bpp, kernel, kernelX, kernelY, kernel_div , CONV_TYPE::MAX);
+
+      result[(j*bpp) + (i*width*bpp) + 0] = static_cast<uint8_t>(std::clamp(filter_value_red, 0.0, 255.0));
+      result[(j*bpp) + (i*width*bpp) + 1] = static_cast<uint8_t>(std::clamp(filter_value_green, 0.0, 255.0));
+      result[(j*bpp) + (i*width*bpp) + 2] = static_cast<uint8_t>(std::clamp(filter_value_blue, 0.0, 255.0));
+      result[(j*bpp) + (i*width*bpp) + 3] = static_cast<uint8_t>(std::clamp(filter_value_alpha, 0.0, 255.0));
+    }
+  }
+}
+
+void SpatialFilterOp::MidPointFilter(const std::vector<uint8_t> & source_image, uint32_t width, uint32_t height, int32_t bpp)
+{
+  spdlog::info("begin spatial filter: midpoint");
+
+  outWidth = static_cast<int32_t>(width);
+  outHeight = static_cast<int32_t>(height);
+
+  MinFilter(source_image, width, height, bpp);
+  auto min_filter = result;
+  MaxFilter(source_image, width, height, bpp);
+  auto max_filter = result;
+
+  for (size_t i=0; i<height; i++)
+  {
+    for (size_t j=0; j<width; j++)
+    {
+      double filter_value_red = (min_filter[(j*bpp) + (i*width*bpp) + 0] + max_filter[(j*bpp) + (i*width*bpp) + 0]) / 2.0;
+      double filter_value_green = (min_filter[(j*bpp) + (i*width*bpp) + 1] + max_filter[(j*bpp) + (i*width*bpp) + 1]) / 2.0;
+      double filter_value_blue = (min_filter[(j*bpp) + (i*width*bpp) + 2] + max_filter[(j*bpp) + (i*width*bpp) + 2]) / 2.0;
+      double filter_value_alpha = (min_filter[(j*bpp) + (i*width*bpp) + 3] + max_filter[(j*bpp) + (i*width*bpp) + 3]) / 2.0;
 
       result[(j*bpp) + (i*width*bpp) + 0] = static_cast<uint8_t>(std::clamp(filter_value_red, 0.0, 255.0));
       result[(j*bpp) + (i*width*bpp) + 1] = static_cast<uint8_t>(std::clamp(filter_value_green, 0.0, 255.0));
