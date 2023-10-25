@@ -35,5 +35,6 @@ enum class MenuOp_SpatialFilter : uint16_t {
   MAX,
   MIDPOINT,
   HARMONIC_MEAN,
-  CONTRA_HARMONIC_MEAN
+  CONTRA_HARMONIC_MEAN,
+  ALPHA_TRIM_MEAN
 };

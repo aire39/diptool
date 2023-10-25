@@ -59,6 +59,10 @@ std::vector<uint8_t> SpatialFilterOp::ProcessImage(MenuOp_SpatialFilter operatio
       ContraHarmonicFilter(source_image, width, height, bpp);
       break;
 
+    case MenuOp_SpatialFilter::ALPHA_TRIM_MEAN:
+      AlphaTrimFilter(source_image, width, height, bpp);
+      break;
+
     default:
       spdlog::warn("not a valid filter");
       break;
@@ -117,6 +121,11 @@ void SpatialFilterOp::ShowSharpenFilterScaling(bool show_sharpen_filter)
 void SpatialFilterOp::SetContraHarmonicConstant(float q_constant)
 {
   contraHarmonicConstant = q_constant;
+}
+
+void SpatialFilterOp::SetAlphaTrimConstant(int32_t d_constant)
+{
+  alphaTrimConstant = d_constant;
 }
 
 void SpatialFilterOp::ShowUnSharpenFilter(bool show_unsharpen_filter)
@@ -269,17 +278,17 @@ double SpatialFilterOp::ConvolutionValue(const std::vector<uint8_t> & source
   return final_value;
 }
 
-float SpatialFilterOp::MedianValue(const std::vector<uint8_t> & source
-                                  ,int32_t x
-                                  ,int32_t y
-                                  ,int32_t source_width
-                                  ,int32_t source_height
-                                  ,int32_t offset
-                                  ,int32_t sum_count
-                                  ,int32_t bpp
-                                  ,int32_t kernel_width
-                                  ,int32_t kernel_height
-                                  ,float median_scale_factor)
+std::vector<float> SpatialFilterOp::CollectValues(const std::vector<uint8_t> & source
+                                                 ,int32_t x
+                                                 ,int32_t y
+                                                 ,int32_t source_width
+                                                 ,int32_t source_height
+                                                 ,int32_t offset
+                                                 ,int32_t sum_count
+                                                 ,int32_t bpp
+                                                 ,int32_t kernel_width
+                                                 ,int32_t kernel_height
+                                                 ,float scale_factor)
 {
   int32_t k_width_centered = (kernel_width - 1) / 2;
   int32_t k_height_centered = (kernel_height - 1) / 2;
@@ -313,11 +322,11 @@ float SpatialFilterOp::MedianValue(const std::vector<uint8_t> & source
         }
         sum_value /= static_cast<float>(sum_count);
 
-        value = std::clamp(median_scale_factor * sum_value, 0.0f, 255.0f);
+        value = std::clamp(scale_factor * sum_value, 0.0f, 255.0f);
       }
       else
       {
-        value = median_scale_factor * static_cast<float>(source[(jj * bpp) + (ii * source_width * bpp) + offset]);
+        value = scale_factor * static_cast<float>(source[(jj * bpp) + (ii * source_width * bpp) + offset]);
       }
 
       int32_t kernel_x_index = (kernel_width - convo_width_diff) + (j - convo_width_it_begin);
@@ -325,6 +334,24 @@ float SpatialFilterOp::MedianValue(const std::vector<uint8_t> & source
       kernel[kernel_x_index + (kernel_width * kernel_y_index)] = value;
     }
   }
+
+  return kernel;
+}
+
+float SpatialFilterOp::MedianValue(const std::vector<uint8_t> & source
+                                  ,int32_t x
+                                  ,int32_t y
+                                  ,int32_t source_width
+                                  ,int32_t source_height
+                                  ,int32_t offset
+                                  ,int32_t sum_count
+                                  ,int32_t bpp
+                                  ,int32_t kernel_width
+                                  ,int32_t kernel_height
+                                  ,float median_scale_factor)
+{
+
+  auto kernel = CollectValues(source, x, y, source_width, source_height, offset, sum_count, bpp, kernel_width, kernel_height, median_scale_factor);
 
   // sort values and return the median from the kernel matrix
 
@@ -703,6 +730,77 @@ void SpatialFilterOp::ContraHarmonicFilter(const std::vector<uint8_t> & source_i
       result[(j*bpp) + (i*width*bpp) + 1] = static_cast<uint8_t>(std::clamp(filter_value_green, 0.0, 255.0));
       result[(j*bpp) + (i*width*bpp) + 2] = static_cast<uint8_t>(std::clamp(filter_value_blue, 0.0, 255.0));
       result[(j*bpp) + (i*width*bpp) + 3] = static_cast<uint8_t>(std::clamp(filter_value_alpha, 0.0, 255.0));
+    }
+  }
+}
+
+void SpatialFilterOp::AlphaTrimFilter(const std::vector<uint8_t> & source_image, uint32_t width, uint32_t height, int32_t bpp)
+{
+  spdlog::info("begin spatial filter: alpha trim");
+
+  outWidth = static_cast<int32_t>(width);
+  outHeight = static_cast<int32_t>(height);
+
+  std::vector<float> kernel (kernelX * kernelY, 1.0f);
+  result = source_image;
+
+  alphaTrimConstant = std::clamp(alphaTrimConstant, 0, (kernelX * kernelY) - 1);
+
+  for (size_t i=0; i<height; i++)
+  {
+    for (size_t j=0; j<width; j++)
+    {
+      auto kernel_red = CollectValues(source_image, j, i, width, height, 0, 0, bpp, kernelX, kernelY, 1.0f);
+      auto kernel_green = CollectValues(source_image, j, i, width, height, 1, 0, bpp, kernelX, kernelY, 1.0f);
+      auto kernel_blue = CollectValues(source_image, j, i, width, height, 2, 0, bpp, kernelX, kernelY, 1.0f);
+      auto kernel_alpha = CollectValues(source_image, j, i, width, height, 3, 0, bpp, kernelX, kernelY, 1.0f);
+
+      std::sort(kernel_red.begin(), kernel_red.end());
+      std::sort(kernel_green.begin(), kernel_green.end());
+      std::sort(kernel_blue.begin(), kernel_blue.end());
+      std::sort(kernel_alpha.begin(), kernel_alpha.end());
+
+      for (size_t k=0; k<alphaTrimConstant; k++)
+      {
+        if ((k % 2) == 0)
+        {
+          kernel_red.erase(kernel_red.begin());
+          kernel_green.erase(kernel_green.begin());
+          kernel_blue.erase(kernel_blue.begin());
+          kernel_alpha.erase(kernel_alpha.begin());
+        }
+        else
+        {
+          kernel_red.erase(kernel_red.end());
+          kernel_green.erase(kernel_green.end());
+          kernel_blue.erase(kernel_blue.end());
+          kernel_alpha.erase(kernel_alpha.end());
+        }
+      }
+
+      int32_t trim_size = (kernelX*kernelY) - alphaTrimConstant;
+      float filter_value_red = 0.0f;
+      float filter_value_green = 0.0f;
+      float filter_value_blue = 0.0f;
+      float filter_value_alpha = 0.0f;
+
+      for (size_t k=0; k<trim_size; k++)
+      {
+        filter_value_red += kernel_red[k];
+        filter_value_green += kernel_green[k];
+        filter_value_blue += kernel_blue[k];
+        filter_value_alpha += kernel_alpha[k];
+      }
+
+      filter_value_red /= static_cast<float>(trim_size);
+      filter_value_green /= static_cast<float>(trim_size);
+      filter_value_blue /= static_cast<float>(trim_size);
+      filter_value_alpha /= static_cast<float>(trim_size);
+
+      result[(j*bpp) + (i*width*bpp) + 0] = static_cast<uint8_t>(std::clamp(filter_value_red, 0.0f, 255.0f));
+      result[(j*bpp) + (i*width*bpp) + 1] = static_cast<uint8_t>(std::clamp(filter_value_green, 0.0f, 255.0f));
+      result[(j*bpp) + (i*width*bpp) + 2] = static_cast<uint8_t>(std::clamp(filter_value_blue, 0.0f, 255.0f));
+      result[(j*bpp) + (i*width*bpp) + 3] = static_cast<uint8_t>(std::clamp(filter_value_alpha, 0.0f, 255.0f));
     }
   }
 }

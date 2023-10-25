@@ -82,7 +82,7 @@ void SpatialFilterMenu::RenderMenu()
 
   const std::vector<const char*> items_list = {"Smoothing", "Median", "Sharpening (Laplacian)", "High-Boosting"
                                               ,"Arithmetic Mean", "Geometric Mean", "Min", "Max", "Midpoint"
-                                              ,"Harmonic Mean", "Contra-Harmonic Mean"};
+                                              ,"Harmonic Mean", "Contra-Harmonic Mean", "Alpha-Trimmed Mean"};
   ImGui::Combo("##operations", &currentItem, items_list.data(), static_cast<int32_t>(items_list.size()));
   ImGui::EndGroup();
 
@@ -128,8 +128,6 @@ void SpatialFilterMenu::RenderMenu()
 
     ImGui::TextColored(ImVec4(0.75, 0.5, 0.9, 1.0f), "unsharp constant (K):");
     ImGui::InputFloat("##unsharp_const", &unsharpConstant, 0.1f, 1.0f, "%.3f", ImGuiInputTextFlags_::ImGuiInputTextFlags_CharsDecimal | ImGuiInputTextFlags_::ImGuiInputTextFlags_AutoSelectAll);
-
-    std::clamp(unsharpConstant, 0.0f, std::numeric_limits<float>::max());
   }
 
   if (CurrentOperation() == MenuOp_SpatialFilter::CONTRA_HARMONIC_MEAN)
@@ -138,8 +136,16 @@ void SpatialFilterMenu::RenderMenu()
 
     ImGui::TextColored(ImVec4(0.75, 0.5, 0.9, 1.0f), "contra-harmonic constant (Q):");
     ImGui::InputFloat("##contra_hormonic_const", &contraHarminocConstant, 0.1f, 1.0f, "%.3f", ImGuiInputTextFlags_::ImGuiInputTextFlags_CharsDecimal | ImGuiInputTextFlags_::ImGuiInputTextFlags_AutoSelectAll);
+  }
 
-    std::clamp(unsharpConstant, 0.0f, std::numeric_limits<float>::max());
+  if (CurrentOperation() == MenuOp_SpatialFilter::ALPHA_TRIM_MEAN)
+  {
+    ImGui::TextColored(ImVec4(0.75, 0.5, 0.9, 1.0f), "filter options:");
+
+    ImGui::TextColored(ImVec4(0.75, 0.5, 0.9, 1.0f), "trim constant (d):");
+    ImGui::InputInt("##alpha_trim_const", &alphaTrimConstant, 1, 10, ImGuiInputTextFlags_::ImGuiInputTextFlags_CharsDecimal | ImGuiInputTextFlags_::ImGuiInputTextFlags_AutoSelectAll);
+
+    alphaTrimConstant = std::clamp(alphaTrimConstant, 0, (kernelX * kernelY) - 1);
   }
 
   ImGui::NewLine();
@@ -200,6 +206,10 @@ MenuOp_SpatialFilter SpatialFilterMenu::CurrentOperation()
       operation = MenuOp_SpatialFilter::CONTRA_HARMONIC_MEAN;
       break;
 
+    case 11:
+      operation = MenuOp_SpatialFilter::ALPHA_TRIM_MEAN;
+      break;
+
     default:
       operation = MenuOp_SpatialFilter::SMOOTHING;
       break;
@@ -239,6 +249,11 @@ float SpatialFilterMenu::GetUnsharpConstant() const
 float SpatialFilterMenu::GetContraHarminocConstant() const
 {
   return contraHarminocConstant;
+}
+
+int32_t SpatialFilterMenu::GetAlphaTrimConstant() const
+{
+  return alphaTrimConstant;
 }
 
 bool SpatialFilterMenu::IsSharpenFullUse() const
