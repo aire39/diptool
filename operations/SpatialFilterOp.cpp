@@ -434,7 +434,7 @@ void SpatialFilterOp::ArithMeanFilter(const std::vector<uint8_t> & source_image,
       float filter_value_red = ConvolutionValue(source_image, j, i, width, height, 0, 0, bpp, kernel, kernelX, kernelY, kernel_div) / static_cast<float>(kernelX * kernelY);
       float filter_value_green = ConvolutionValue(source_image, j, i, width, height, 1, 0, bpp, kernel, kernelX, kernelY, kernel_div) / static_cast<float>(kernelX * kernelY);
       float filter_value_blue = ConvolutionValue(source_image, j, i, width, height, 2, 0, bpp, kernel, kernelX, kernelY, kernel_div) / static_cast<float>(kernelX * kernelY);
-      float filter_value_alpha = ConvolutionValue(source_image, j, i, width, height, 3, 0, bpp, kernel, kernelX, kernelY, kernel_div / static_cast<float>(kernelX * kernelY));
+      float filter_value_alpha = ConvolutionValue(source_image, j, i, width, height, 3, 0, bpp, kernel, kernelX, kernelY, kernel_div) / static_cast<float>(kernelX * kernelY);
 
       result[(j*bpp) + (i*width*bpp) + 0] = static_cast<uint8_t>(std::clamp(filter_value_red, 0.0f, 255.0f));
       result[(j*bpp) + (i*width*bpp) + 1] = static_cast<uint8_t>(std::clamp(filter_value_green, 0.0f, 255.0f));
