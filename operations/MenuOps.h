@@ -40,7 +40,15 @@ namespace MenuOps {
     SMOOTHING = 0,
     MEDIAN,
     SHARPENING,
-    HIGHBOOST
+    HIGHBOOST,
+    ARITH_MEAN,
+    GEO_MEAN,
+    MIN,
+    MAX,
+    MIDPOINT,
+    HARMONIC_MEAN,
+    CONTRA_HARMONIC_MEAN,
+    ALPHA_TRIM_MEAN
   };
 
   union Op {

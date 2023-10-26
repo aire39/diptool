@@ -503,12 +503,12 @@ void RenderTask(sf::RenderWindow & window
           spatial_op.ShowUnSharpenFilterScaling(spatial_filter_menu.ShowUnSharpenFilterScaling());
         }
 
-        if (spatial_filter_menu.CurrentOperation() == MenuOp_SpatialFilter::CONTRA_HARMONIC_MEAN)
+        if (spatial_filter_menu.CurrentOperation() == MenuOps::SpatialFilter::CONTRA_HARMONIC_MEAN)
         {
           spatial_op.SetContraHarmonicConstant(spatial_filter_menu.GetContraHarminocConstant());
         }
 
-        if (spatial_filter_menu.CurrentOperation() == MenuOp_SpatialFilter::ALPHA_TRIM_MEAN)
+        if (spatial_filter_menu.CurrentOperation() == MenuOps::SpatialFilter::ALPHA_TRIM_MEAN)
         {
           spatial_op.SetAlphaTrimConstant(spatial_filter_menu.GetAlphaTrimConstant());
         }

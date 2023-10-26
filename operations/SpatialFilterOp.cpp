@@ -32,35 +32,35 @@ std::vector<uint8_t> SpatialFilterOp::ProcessImage(MenuOps::SpatialFilter operat
       HighBoostFilter(source_image, width, height, bpp);
       break;
 
-    case MenuOp_SpatialFilter::ARITH_MEAN:
+    case MenuOps::SpatialFilter::ARITH_MEAN:
       ArithMeanFilter(source_image, width, height, bpp);
       break;
 
-    case MenuOp_SpatialFilter::GEO_MEAN:
+    case MenuOps::SpatialFilter::GEO_MEAN:
       GeoMeanFilter(source_image, width, height, bpp);
       break;
 
-    case MenuOp_SpatialFilter::MIN:
+    case MenuOps::SpatialFilter::MIN:
       MinFilter(source_image, width, height, bpp);
       break;
 
-    case MenuOp_SpatialFilter::MAX:
+    case MenuOps::SpatialFilter::MAX:
       MaxFilter(source_image, width, height, bpp);
       break;
 
-    case MenuOp_SpatialFilter::MIDPOINT:
+    case MenuOps::SpatialFilter::MIDPOINT:
       MidPointFilter(source_image, width, height, bpp);
       break;
 
-    case MenuOp_SpatialFilter::HARMONIC_MEAN:
+    case MenuOps::SpatialFilter::HARMONIC_MEAN:
       HarmonicFilter(source_image, width, height, bpp);
       break;
 
-    case MenuOp_SpatialFilter::CONTRA_HARMONIC_MEAN:
+    case MenuOps::SpatialFilter::CONTRA_HARMONIC_MEAN:
       ContraHarmonicFilter(source_image, width, height, bpp);
       break;
 
-    case MenuOp_SpatialFilter::ALPHA_TRIM_MEAN:
+    case MenuOps::SpatialFilter::ALPHA_TRIM_MEAN:
       AlphaTrimFilter(source_image, width, height, bpp);
       break;
 

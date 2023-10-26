@@ -137,7 +137,7 @@ void SpatialFilterMenu::RenderMenu()
     ImGui::InputFloat("##unsharp_const", &unsharpConstant, 0.1f, 1.0f, "%.3f", ImGuiInputTextFlags_::ImGuiInputTextFlags_CharsDecimal | ImGuiInputTextFlags_::ImGuiInputTextFlags_AutoSelectAll);
   }
 
-  if (CurrentOperation() == MenuOp_SpatialFilter::CONTRA_HARMONIC_MEAN)
+  if (CurrentOperation() == MenuOps::SpatialFilter::CONTRA_HARMONIC_MEAN)
   {
     ImGui::TextColored(ImVec4(0.75, 0.5, 0.9, 1.0f), "filter options:");
 
@@ -145,7 +145,7 @@ void SpatialFilterMenu::RenderMenu()
     ImGui::InputFloat("##contra_hormonic_const", &contraHarminocConstant, 0.1f, 1.0f, "%.3f", ImGuiInputTextFlags_::ImGuiInputTextFlags_CharsDecimal | ImGuiInputTextFlags_::ImGuiInputTextFlags_AutoSelectAll);
   }
 
-  if (CurrentOperation() == MenuOp_SpatialFilter::ALPHA_TRIM_MEAN)
+  if (CurrentOperation() == MenuOps::SpatialFilter::ALPHA_TRIM_MEAN)
   {
     ImGui::TextColored(ImVec4(0.75, 0.5, 0.9, 1.0f), "filter options:");
 
@@ -186,35 +186,35 @@ MenuOps::SpatialFilter SpatialFilterMenu::CurrentOperation()
       break;
 
     case 4:
-      operation = MenuOp_SpatialFilter::ARITH_MEAN;
+      operation = MenuOps::SpatialFilter::ARITH_MEAN;
       break;
 
     case 5:
-      operation = MenuOp_SpatialFilter::GEO_MEAN;
+      operation = MenuOps::SpatialFilter::GEO_MEAN;
       break;
 
     case 6:
-      operation = MenuOp_SpatialFilter::MIN;
+      operation = MenuOps::SpatialFilter::MIN;
       break;
 
     case 7:
-      operation = MenuOp_SpatialFilter::MAX;
+      operation = MenuOps::SpatialFilter::MAX;
       break;
 
     case 8:
-      operation = MenuOp_SpatialFilter::MIDPOINT;
+      operation = MenuOps::SpatialFilter::MIDPOINT;
       break;
 
     case 9:
-      operation = MenuOp_SpatialFilter::HARMONIC_MEAN;
+      operation = MenuOps::SpatialFilter::HARMONIC_MEAN;
       break;
 
     case 10:
-      operation = MenuOp_SpatialFilter::CONTRA_HARMONIC_MEAN;
+      operation = MenuOps::SpatialFilter::CONTRA_HARMONIC_MEAN;
       break;
 
     case 11:
-      operation = MenuOp_SpatialFilter::ALPHA_TRIM_MEAN;
+      operation = MenuOps::SpatialFilter::ALPHA_TRIM_MEAN;
       break;
 
     default:
