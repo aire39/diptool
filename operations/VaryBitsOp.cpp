@@ -93,6 +93,21 @@ namespace
   }
 }
 
+VaryBitsOp::VaryBitsOp()
+{
+  opType = MenuOps::OpType::VARYINGBITS;
+}
+
+std::vector<uint8_t> VaryBitsOp::ProcessImage(MenuOps::Op op
+                                             ,const std::vector<uint8_t> & source_image
+                                             ,uint32_t width
+                                             ,uint32_t height
+                                             ,uint8_t bpp
+                                             ,uint16_t iterations)
+{
+  return {};
+}
+
 std::vector<uint8_t> VaryBitsOp::ProcessImage(int32_t bit_level_operation
                                              ,bool bit_contrast
                                              ,const std::vector<uint8_t> & source_image
@@ -111,21 +126,6 @@ std::vector<uint8_t> VaryBitsOp::ProcessImage(int32_t bit_level_operation
     BitLevelAlgorithm(source_image, width, height, bpp, bit_level_operation, bit_contrast);
   }
   return result;
-}
-
-const std::vector<uint8_t> & VaryBitsOp::GetImage() const
-{
-  return result;
-}
-
-int32_t VaryBitsOp::GetWidth() const
-{
-  return outWidth;
-}
-
-int32_t VaryBitsOp::GetHeight() const
-{
-  return outHeight;
 }
 
 std::set<uint32_t> VaryBitsOp::GetUniquePixelValues() const

@@ -2,9 +2,9 @@
 
 #include <imgui.h>
 #include <imgui-SFML.h>
-#include <spdlog/spdlog.h>
+#include "spdlog/include/spdlog/spdlog.h"
 
-#include <tinyfiledialogs/tinyfiledialogs.h>
+#include "tinyfiledialogs/tinyfiledialogs.h"
 
 namespace {
   bool ButtonCenteredOnLine(const char* label)

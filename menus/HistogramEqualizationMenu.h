@@ -6,7 +6,7 @@
 #include <vector>
 #include <mutex>
 
-#include "MenuOps.h"
+#include "operations/MenuOps.h"
 
 class HistogramEqualizationMenu
 {
@@ -15,7 +15,7 @@ class HistogramEqualizationMenu
     ~HistogramEqualizationMenu() = default;
 
     void RenderMenu();
-    [[nodiscard]] MenuOp_HistogramMethod CurrentOperation() const;
+    [[nodiscard]] MenuOps::HistogramMethod CurrentOperation() const;
     bool ProcessBegin();
 
     void SetHistogramData(std::vector<std::map<int32_t, float>> & histogram_data);
@@ -42,7 +42,7 @@ class HistogramEqualizationMenu
 
   private:
     bool processBegin = false;
-    MenuOp_HistogramMethod operation = MenuOp_HistogramMethod::GLOBAL;
+    MenuOps::HistogramMethod operation = MenuOps::HistogramMethod::GLOBAL;
     std::vector<std::map<int32_t, float>> histogramNormalized;
     std::vector<std::map<int32_t, float>> histogramNormalizedRemap;
     std::vector<std::vector<float>> histogramSourceValues = {std::vector<float>(256), std::vector<float>(256), std::vector<float>(256)};

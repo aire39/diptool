@@ -4,12 +4,20 @@
 #include <vector>
 #include <set>
 #include <array>
+#include "ImageOperation.h"
 
-class VaryBitsOp
+class VaryBitsOp : public ImageOperation
 {
   public:
-    VaryBitsOp() = default;
+    VaryBitsOp();
     ~VaryBitsOp() = default;
+
+    std::vector<uint8_t> ProcessImage(MenuOps::Op op
+                                     ,const std::vector<uint8_t> & source_image
+                                     ,uint32_t width
+                                     ,uint32_t height
+                                     ,uint8_t bpp
+                                     ,uint16_t iterations) override;
 
     std::vector<uint8_t> ProcessImage(int32_t bit_level_operation
                                      ,bool bit_contrast
@@ -18,21 +26,13 @@ class VaryBitsOp
                                      ,uint32_t height
                                      ,uint8_t bpp);
 
-    [[nodiscard]] const std::vector<uint8_t> & GetImage() const;
-
-    [[nodiscard]] int32_t GetWidth() const;
-    [[nodiscard]] int32_t GetHeight() const;
-
     [[nodiscard]] std::set<uint32_t> GetUniquePixelValues() const;
 
     void SetUseColorChannels(bool use_color_channels);
     void SetShowBitPlanes(const std::array<bool, 8> & show_bit_planes);
 
   private:
-    int32_t outWidth = 0;
-    int32_t outHeight = 0;
     std::set<uint32_t> uniquePixelValues;
-    std::vector<uint8_t> result;
     bool useColor = false;
     std::array<bool, 8> showBitPlanes = {true};
 

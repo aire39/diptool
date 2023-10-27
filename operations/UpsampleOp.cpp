@@ -74,7 +74,22 @@ namespace
   }
 }
 
-std::vector<uint8_t> UpsampleOp::ProcessImage(MenuOp_Upsample operation
+UpsampleOp::UpsampleOp()
+{
+  opType = MenuOps::OpType::UPSAMPLE;
+}
+
+std::vector<uint8_t> UpsampleOp::ProcessImage(MenuOps::Op op
+                                             ,const std::vector<uint8_t> & source_image
+                                             ,uint32_t width
+                                             ,uint32_t height
+                                             ,uint8_t bpp
+                                             ,uint16_t iterations)
+{
+  return {};
+}
+
+std::vector<uint8_t> UpsampleOp::ProcessImage(MenuOps::Upsample operation
                                              ,const std::vector<uint8_t> & source_image
                                              ,uint32_t width
                                              ,uint32_t height
@@ -83,38 +98,23 @@ std::vector<uint8_t> UpsampleOp::ProcessImage(MenuOp_Upsample operation
 {
   switch (operation)
   {
-    case MenuOp_Upsample::NEAREST:
+    case MenuOps::Upsample::NEAREST:
       spdlog::info("perform nearest upsample operation");
       NearestAlgorithm(source_image, width, height, bpp, iterations);
       break;
 
-    case MenuOp_Upsample::LINEAR:
+    case MenuOps::Upsample::LINEAR:
       spdlog::info("perform linear upsample operation");
       LinearAlgorithm(source_image, width, height, bpp, iterations);
       break;
 
-    case MenuOp_Upsample::BILINEAR:
+    case MenuOps::Upsample::BILINEAR:
       spdlog::info("perform bilinear upsample operation");
       BilinearAlgorithm(source_image, width, height, bpp, iterations);
       break;
   }
 
   return result;
-}
-
-const std::vector<uint8_t> & UpsampleOp::GetImage() const
-{
-  return result;
-}
-
-int32_t UpsampleOp::GetWidth() const
-{
-  return outWidth;
-}
-
-int32_t UpsampleOp::GetHeight() const
-{
-  return outHeight;
 }
 
 void UpsampleOp::NearestAlgorithm(const std::vector<uint8_t> & source_image

@@ -4,7 +4,7 @@
 #include <array>
 #include <spdlog/spdlog.h>
 
-std::vector<uint8_t> SpatialFilterOp::ProcessImage(MenuOp_SpatialFilter operation
+std::vector<uint8_t> SpatialFilterOp::ProcessImage(MenuOps::SpatialFilter operation
                                                   ,const std::vector<uint8_t> & source_image
                                                   ,uint32_t width
                                                   ,uint32_t height
@@ -16,51 +16,51 @@ std::vector<uint8_t> SpatialFilterOp::ProcessImage(MenuOp_SpatialFilter operatio
 
   switch (operation)
   {
-    case MenuOp_SpatialFilter::SMOOTHING:
+    case MenuOps::SpatialFilter::SMOOTHING:
       SmoothingFilter(source_image, width, height, bpp);
       break;
 
-    case MenuOp_SpatialFilter::MEDIAN:
+    case MenuOps::SpatialFilter::MEDIAN:
       MedianFilter(source_image, width, height, bpp);
       break;
 
-    case MenuOp_SpatialFilter::SHARPENING:
+    case MenuOps::SpatialFilter::SHARPENING:
       SharpenFilter(source_image, width, height, bpp);
       break;
 
-    case MenuOp_SpatialFilter::HIGHBOOST:
+    case MenuOps::SpatialFilter::HIGHBOOST:
       HighBoostFilter(source_image, width, height, bpp);
       break;
 
-    case MenuOp_SpatialFilter::ARITH_MEAN:
+    case MenuOps::SpatialFilter::ARITH_MEAN:
       ArithMeanFilter(source_image, width, height, bpp);
       break;
 
-    case MenuOp_SpatialFilter::GEO_MEAN:
+    case MenuOps::SpatialFilter::GEO_MEAN:
       GeoMeanFilter(source_image, width, height, bpp);
       break;
 
-    case MenuOp_SpatialFilter::MIN:
+    case MenuOps::SpatialFilter::MIN:
       MinFilter(source_image, width, height, bpp);
       break;
 
-    case MenuOp_SpatialFilter::MAX:
+    case MenuOps::SpatialFilter::MAX:
       MaxFilter(source_image, width, height, bpp);
       break;
 
-    case MenuOp_SpatialFilter::MIDPOINT:
+    case MenuOps::SpatialFilter::MIDPOINT:
       MidPointFilter(source_image, width, height, bpp);
       break;
 
-    case MenuOp_SpatialFilter::HARMONIC_MEAN:
+    case MenuOps::SpatialFilter::HARMONIC_MEAN:
       HarmonicFilter(source_image, width, height, bpp);
       break;
 
-    case MenuOp_SpatialFilter::CONTRA_HARMONIC_MEAN:
+    case MenuOps::SpatialFilter::CONTRA_HARMONIC_MEAN:
       ContraHarmonicFilter(source_image, width, height, bpp);
       break;
 
-    case MenuOp_SpatialFilter::ALPHA_TRIM_MEAN:
+    case MenuOps::SpatialFilter::ALPHA_TRIM_MEAN:
       AlphaTrimFilter(source_image, width, height, bpp);
       break;
 

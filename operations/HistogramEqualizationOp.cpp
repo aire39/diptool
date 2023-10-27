@@ -92,12 +92,12 @@ const std::map<int32_t, float> & HistogramEqualizationOp::GetHistogramRemapBlue(
   return remappedValuesNormalizedBlue;
 }
 
-const MenuOp_HistogramColor & HistogramEqualizationOp::HistogramColorType() const
+const MenuOps::HistogramColor & HistogramEqualizationOp::HistogramColorType() const
 {
   return inputColorType;
 }
 
-void HistogramEqualizationOp::SetHistogramColorType(MenuOp_HistogramColor color_type)
+void HistogramEqualizationOp::SetHistogramColorType(MenuOps::HistogramColor color_type)
 {
   inputColorType = color_type;
 }
@@ -117,12 +117,12 @@ void HistogramEqualizationOp::SetLocalizeKernelConstants(float k0, float k1, flo
   enhanceConst = c;
 }
 
-MenuOp_HistogramMethod HistogramEqualizationOp::GetCurrentSetOperation() const
+MenuOps::HistogramMethod HistogramEqualizationOp::GetCurrentSetOperation() const
 {
   return histogramMethod;
 }
 
-void HistogramEqualizationOp::ProcessHistogram(MenuOp_HistogramMethod operation
+void HistogramEqualizationOp::ProcessHistogram(MenuOps::HistogramMethod operation
                                               ,const std::vector<uint8_t> & source_image
                                               ,uint8_t bpp)
 {
@@ -139,15 +139,15 @@ void HistogramEqualizationOp::ProcessHistogram(MenuOp_HistogramMethod operation
 
   switch (operation)
   {
-    case MenuOp_HistogramMethod::GLOBAL:
+    case MenuOps::HistogramMethod::GLOBAL:
       GlobalProcess(source_image, bpp);
       break;
 
-    case MenuOp_HistogramMethod::LOCALIZE:
+    case MenuOps::HistogramMethod::LOCALIZE:
       LocalizeProcess(source_image, bpp);
       break;
 
-    case MenuOp_HistogramMethod::LOCALIZE_ENCHANCEMENT:
+    case MenuOps::HistogramMethod::LOCALIZE_ENCHANCEMENT:
       LocalizeEnhancementProcess(source_image, bpp);
       break;
 
@@ -241,7 +241,7 @@ void HistogramEqualizationOp::GlobalProcess(const std::vector<uint8_t> & source_
 
   // remap the values for Histogram Equalization into the result buffer
 
-  if (inputColorType == MenuOp_HistogramColor::GRAY)
+  if (inputColorType == MenuOps::HistogramColor::GRAY)
   {
     for (size_t i=0; i<(outWidth*outHeight); i++)
     {
@@ -252,7 +252,7 @@ void HistogramEqualizationOp::GlobalProcess(const std::vector<uint8_t> & source_
       result[3 + i * bpp] = source_image[3 + i * bpp];
     }
   }
-  else if (inputColorType == MenuOp_HistogramColor::RGBA)
+  else if (inputColorType == MenuOps::HistogramColor::RGBA)
   {
     for (size_t i = 0; i < (outWidth * outHeight); i++)
     {
@@ -269,7 +269,7 @@ void HistogramEqualizationOp::LocalizeProcess(const std::vector<uint8_t> & sourc
 {
   result = source_image;
 
-  if (inputColorType == MenuOp_HistogramColor::GRAY)
+  if (inputColorType == MenuOps::HistogramColor::GRAY)
   {
     std::vector<std::map<int32_t, int32_t>> kernel_histogram_remap(outWidth * outHeight);
 
@@ -318,7 +318,7 @@ void HistogramEqualizationOp::LocalizeProcess(const std::vector<uint8_t> & sourc
     }
 
   }
-  else // inputColorType == MenuOp_HistogramColor::RGBA
+  else // inputColorType == MenuOps::HistogramColor::RGBA
   {
     std::vector<std::map<int32_t, int32_t>> kernel_histogram_remap_red(outWidth * outHeight);
     std::vector<std::map<int32_t, int32_t>> kernel_histogram_remap_green(outWidth * outHeight);
@@ -407,7 +407,7 @@ void HistogramEqualizationOp::LocalizeEnhancementProcess(const std::vector<uint8
     }
   };
 
-  if (inputColorType == MenuOp_HistogramColor::GRAY)
+  if (inputColorType == MenuOps::HistogramColor::GRAY)
   {
     auto global_mean = std::round(HistogramMean(histogramNormalizedGray));
     auto global_standard_deviation = std::round(HistogramStandardDeviation(histogramNormalizedGray, global_mean));
@@ -425,7 +425,7 @@ void HistogramEqualizationOp::LocalizeEnhancementProcess(const std::vector<uint8
       }
     }
   }
-  else // MenuOp_HistogramColor::RGBA
+  else // MenuOps::HistogramColor::RGBA
   {
     auto global_mean_red = std::round(HistogramMean(histogramNormalizedRed));
     auto global_standard_deviation_red = std::round(HistogramStandardDeviation(histogramNormalizedRed, global_mean_red));

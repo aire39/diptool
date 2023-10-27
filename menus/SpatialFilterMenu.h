@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MenuOps.h"
+#include "operations/MenuOps.h"
 
 class SpatialFilterMenu
 {
@@ -9,7 +9,7 @@ class SpatialFilterMenu
     ~SpatialFilterMenu() = default;
 
     void RenderMenu();
-    [[nodiscard]] MenuOp_SpatialFilter CurrentOperation();
+    [[nodiscard]] MenuOps::SpatialFilter CurrentOperation();
     [[nodiscard]] bool ProcessBegin();
 
     [[nodiscard]] int32_t GetKernelX() const;
@@ -28,7 +28,7 @@ class SpatialFilterMenu
 
   private:
     bool processBegin = false;
-    MenuOp_SpatialFilter operation = MenuOp_SpatialFilter::SMOOTHING;
+    MenuOps::SpatialFilter operation = MenuOps::SpatialFilter::SMOOTHING;
     int32_t currentItem = 0;
     int32_t kernelX = 3;
     int32_t kernelY = 3;

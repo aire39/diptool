@@ -3,7 +3,7 @@
 #include <string>
 #include <cstdint>
 
-#include "MenuOps.h"
+#include "operations/MenuOps.h"
 
 class UpsampleMenu
 {
@@ -11,12 +11,12 @@ class UpsampleMenu
     UpsampleMenu() = default;
 
     void RenderMenu();
-    [[nodiscard]] MenuOp_Upsample CurrentOperation() const;
+    [[nodiscard]] MenuOps::Upsample CurrentOperation() const;
     [[nodiscard]] int32_t UpsampleIterations() const;
     bool ProcessBegin();
 
   private:
     bool processBegin = false;
-    MenuOp_Upsample operation = MenuOp_Upsample::NEAREST;
+    MenuOps::Upsample operation = MenuOps::Upsample::NEAREST;
     int32_t upsamepleIters = 0;
 };

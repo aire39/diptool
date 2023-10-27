@@ -128,34 +128,15 @@ file(GLOB COMMON ${PROJECT_SOURCE_DIR}/common/*)
 
 include_directories(${PROJECT_SOURCE_DIR})
 
+file(GLOB OP_FILES ${PROJECT_SOURCE_DIR}/operations/*)
+file(GLOB MENU_FILES ${PROJECT_SOURCE_DIR}/menus/*)
+file(GLOB UTIL_FILES ${PROJECT_SOURCE_DIR}/utilities/*)
+
 add_executable(diptool
                main.cpp
-               CheckerBoardImage.cpp
-               CheckerBoardImage.h
-               Menu.cpp
-               Menu.h
-               DownsampleMenu.cpp
-               DownsampleMenu.h
-               menus/UpsampleMenu.cpp
-               menus/UpsampleMenu.h
-               menus/VaryBitsMenu.cpp
-               menus/VaryBitsMenu.h
-               menus/HistogramEqualizationMenu.cpp
-               menus/HistogramEqualizationMenu.h
-               menus/SpatialFilterMenu.cpp
-               menus/SpatialFilterMenu.h
-               operations/DownsampleOp.cpp
-               operations/DownsampleOp.h
-               operations/UpsampleOp.cpp
-               operations/UpsampleOp.h
-               operations/VaryBitsOp.cpp
-               operations/VaryBitsOp.h
-               operations/HistogramOp.cpp
-               operations/HistogramOp.h
-               operations/HistogramEqualizationOp.cpp
-               operations/HistogramEqualizationOp.h
-               operations/SpatialFilterOp.cpp
-               operations/SpatialFilterOp.h
+               ${OP_FILES}
+               ${MENU_FILES}
+               ${UTIL_FILES}
                ${TINYDIALOG}
                ${IMPLOT}
                ${COMMON}

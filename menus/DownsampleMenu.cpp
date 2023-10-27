@@ -1,7 +1,7 @@
 #include "DownsampleMenu.h"
 
 #include <imgui.h>
-#include <spdlog/spdlog.h>
+#include "spdlog/include/spdlog/spdlog.h"
 
 namespace {
   bool ButtonCenteredOnLine(const char* label)
@@ -36,42 +36,53 @@ void DownsampleMenu::RenderMenu()
 
   ImGui::BeginGroup();
 
-  if(ImGui::RadioButton("Decimate", (operation == MenuOp_Downsample::DECIMATE)))
+  if(ImGui::RadioButton("Decimate", (operation == MenuOps::Downsample::DECIMATE)))
   {
-    operation = MenuOp_Downsample::DECIMATE;
+    operation = MenuOps::Downsample::DECIMATE;
   }
 
   ImGui::SameLine();
 
-  if (ImGui::RadioButton("Nearest", (operation == MenuOp_Downsample::NEAREST)))
+  if (ImGui::RadioButton("Nearest", (operation == MenuOps::Downsample::NEAREST)))
   {
-    operation = MenuOp_Downsample::NEAREST;
+    operation = MenuOps::Downsample::NEAREST;
   }
 
   ImGui::EndGroup();
 
   ImGui::NewLine();
 
+  ImGui::BeginGroup();
   if (ButtonCenteredOnLine("save image"))
   {
     switch (operation)
     {
-      case MenuOp_Downsample::DECIMATE:
+      case MenuOps::Downsample::DECIMATE:
         spdlog::info("processing image as decimate");
         break;
 
-      case MenuOp_Downsample::NEAREST:
+      case MenuOps::Downsample::NEAREST:
         spdlog::info("processing image as nearest");
         break;
     }
 
+
+
     processBegin = true;
   }
+
+  ImGui::SameLine();
+
+  if (ButtonCenteredOnLine("add operation") && callback)
+  {
+    callback();
+  }
+  ImGui::EndGroup();
 
   ImGui::End();
 }
 
-MenuOp_Downsample DownsampleMenu::CurrentOperation() const
+MenuOps::Downsample DownsampleMenu::CurrentOperation() const
 {
   return operation;
 }
@@ -90,4 +101,9 @@ bool DownsampleMenu::ProcessBegin()
   }
 
   return should_process;
+}
+
+void DownsampleMenu::SetCallback(std::function<void()> cb)
+{
+  callback = cb;
 }

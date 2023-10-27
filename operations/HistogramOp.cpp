@@ -5,7 +5,7 @@
 #include <cmath>
 
 std::vector<uint8_t> HistogramOp::ProcessImage
-  (MenuOp_HistogramMethod operation
+  (MenuOps::HistogramMethod operation
   ,const std::vector<uint8_t> & source_image
   ,uint32_t width
   ,uint32_t height
@@ -249,7 +249,7 @@ std::map<int32_t, float> HistogramOp::NormalizeHistogramValues(const std::map<in
   return normalized_histogram;
 }
 
-void HistogramOp::ProcessHistogram(MenuOp_HistogramMethod operation
+void HistogramOp::ProcessHistogram(MenuOps::HistogramMethod operation
                                   ,const std::vector<uint8_t> & source_image
                                   ,uint8_t bpp)
 {
