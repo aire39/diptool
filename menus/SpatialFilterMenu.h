@@ -21,8 +21,10 @@ class SpatialFilterMenu
     [[nodiscard]] bool IsSharpenFullUse() const;
     [[nodiscard]] bool ShowSharpenFilter() const;
     [[nodiscard]] bool ShowSharpenFilterScaling() const;
+    [[nodiscard]] bool InvertSharpenFilterScaling() const;
     [[nodiscard]] bool ShowUnSharpenFilter() const;
     [[nodiscard]] bool ShowUnSharpenFilterScaling() const;
+
 
   private:
     bool processBegin = false;
@@ -38,6 +40,7 @@ class SpatialFilterMenu
     bool isSharpUsingFullKernel = false;
     bool showSharpenFilter = false;
     bool showSharpenFilterScaling = false;
+    bool invertSharpenFilterScaling = true;
     bool showUnSharpenFilter = false;
     bool showUnSharpenFilterScaling = false;
 };

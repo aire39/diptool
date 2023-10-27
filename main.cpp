@@ -483,6 +483,7 @@ void RenderTask(sf::RenderWindow & window
           spatial_op.SetSharpenUseFullKernel(spatial_filter_menu.IsSharpenFullUse());
           spatial_op.ShowSharpenFilter(spatial_filter_menu.ShowSharpenFilter());
           spatial_op.ShowSharpenFilterScaling(spatial_filter_menu.ShowSharpenFilterScaling());
+          spatial_op.InvertSharpenFilterScaling(spatial_filter_menu.InvertSharpenFilterScaling());
         }
 
         if (spatial_filter_menu.CurrentOperation() == MenuOp_SpatialFilter::HIGHBOOST)

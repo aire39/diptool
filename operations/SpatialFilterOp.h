@@ -31,6 +31,7 @@ class SpatialFilterOp
     void SetAlphaTrimConstant(int32_t d_constant);
     void ShowUnSharpenFilter(bool show_sharpen_filter);
     void ShowUnSharpenFilterScaling(bool show_sharpen_filter);
+    void InvertSharpenFilterScaling(bool invert_scaling);
 
   private:
 
@@ -101,4 +102,5 @@ class SpatialFilterOp
     bool showSharpenFilterScaling = true;
     bool showUnSharpenFilter = false;
     bool showUnSharpenFilterScaling = true;
+    bool invertSharpFilterScaling = true;
 };

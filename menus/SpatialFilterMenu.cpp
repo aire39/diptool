@@ -104,6 +104,13 @@ void SpatialFilterMenu::RenderMenu()
       ImGui::Text("show sharp filter with scaling:");
       ImGui::SameLine();
       ImGui::Checkbox("##sharp_show_filter_scaling", &showSharpenFilterScaling);
+
+      if (showSharpenFilterScaling)
+      {
+        ImGui::Text("invert filter scaling:");
+        ImGui::SameLine();
+        ImGui::Checkbox("##sharp_invert_scaling", &invertSharpenFilterScaling);
+      }
     }
 
     ImGui::NewLine();
@@ -269,6 +276,11 @@ bool SpatialFilterMenu::ShowSharpenFilter() const
 bool SpatialFilterMenu::ShowSharpenFilterScaling() const
 {
   return showSharpenFilterScaling;
+}
+
+bool SpatialFilterMenu::InvertSharpenFilterScaling() const
+{
+  return invertSharpenFilterScaling;
 }
 
 bool SpatialFilterMenu::ShowUnSharpenFilter() const

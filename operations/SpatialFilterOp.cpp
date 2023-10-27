@@ -1,6 +1,7 @@
 #include "SpatialFilterOp.h"
 
 #include <algorithm>
+#include <array>
 #include <spdlog/spdlog.h>
 
 std::vector<uint8_t> SpatialFilterOp::ProcessImage(MenuOp_SpatialFilter operation
@@ -136,6 +137,11 @@ void SpatialFilterOp::ShowUnSharpenFilter(bool show_unsharpen_filter)
 void SpatialFilterOp::ShowUnSharpenFilterScaling(bool show_unsharpen_filter)
 {
   showUnSharpenFilterScaling = show_unsharpen_filter;
+}
+
+void SpatialFilterOp::InvertSharpenFilterScaling(bool invert_scaling)
+{
+  invertSharpFilterScaling = invert_scaling;
 }
 
 double SpatialFilterOp::ConvolutionValue(const std::vector<uint8_t> & source
@@ -451,7 +457,9 @@ void SpatialFilterOp::SharpenFilter(const std::vector<uint8_t> & source_image, u
 
   constexpr float kernel_div = 1.0f;
 
-  float sharpen_filter_scaling = showSharpenFilterScaling ? 128.0f : 0.0f;
+  std::array<float, 3> min_value = {0.0f};
+  std::array<float, 3> max_value = {0.0f};
+  std::vector<float> sharp_mask (width * height * bpp, 0.0f);
 
   for (size_t i=0; i<height; i++)
   {
@@ -465,10 +473,28 @@ void SpatialFilterOp::SharpenFilter(const std::vector<uint8_t> & source_image, u
 
       if (showSharpenFilter)
       {
-        result[(j*bpp) + (i*width*bpp) + 0] = static_cast<uint8_t>(std::clamp(filter_value_red + sharpen_filter_scaling, 0.0f, 255.0f));
-        result[(j*bpp) + (i*width*bpp) + 1] = static_cast<uint8_t>(std::clamp(filter_value_green + sharpen_filter_scaling, 0.0f, 255.0f));
-        result[(j*bpp) + (i*width*bpp) + 2] = static_cast<uint8_t>(std::clamp(filter_value_blue + sharpen_filter_scaling, 0.0f, 255.0f));
-        result[(j*bpp) + (i*width*bpp) + 3] = static_cast<uint8_t>(std::clamp(filter_value_alpha + 255.0f, 0.0f, 255.0f));
+        min_value[0] = std::min(min_value[0], filter_value_red);
+        min_value[1] = std::min(min_value[1], filter_value_green);
+        min_value[2] = std::min(min_value[2], filter_value_blue);
+
+        max_value[0] = std::max(max_value[0], filter_value_red);
+        max_value[1] = std::max(max_value[1], filter_value_green);
+        max_value[2] = std::max(max_value[2], filter_value_blue);
+
+        if (!showSharpenFilterScaling)
+        {
+          result[(j*bpp) + (i*width*bpp) + 0] = static_cast<uint8_t>(std::clamp(filter_value_red, 0.0f, 255.0f));
+          result[(j*bpp) + (i*width*bpp) + 1] = static_cast<uint8_t>(std::clamp(filter_value_green, 0.0f, 255.0f));
+          result[(j*bpp) + (i*width*bpp) + 2] = static_cast<uint8_t>(std::clamp(filter_value_blue, 0.0f, 255.0f));
+          result[(j*bpp) + (i*width*bpp) + 3] = static_cast<uint8_t>(std::clamp(filter_value_alpha + 255.0f, 0.0f, 255.0f));
+        }
+        else
+        {
+          sharp_mask[(j*bpp) + (i*width*bpp) + 0] = filter_value_red;
+          sharp_mask[(j*bpp) + (i*width*bpp) + 1] = filter_value_green;
+          sharp_mask[(j*bpp) + (i*width*bpp) + 2] = filter_value_blue;
+          sharp_mask[(j*bpp) + (i*width*bpp) + 3] = 255.0f;
+        }
       }
       else
       {
@@ -479,6 +505,38 @@ void SpatialFilterOp::SharpenFilter(const std::vector<uint8_t> & source_image, u
       }
     }
   }
+
+  if (showSharpenFilterScaling && showSharpenFilter)
+  {
+    for (size_t i=0; i<height; i++)
+    {
+      for (size_t j=0; j<width; j++)
+      {
+        float scale_value_red;
+        float scale_value_green;
+        float scale_value_blue;
+
+        if (invertSharpFilterScaling)
+        {
+          scale_value_red = ((max_value[0] - static_cast<float>(sharp_mask[(j*bpp) + (i*width*bpp) + 0])) / (max_value[0] - min_value[0])) * 255.0f;
+          scale_value_green = ((max_value[1] - static_cast<float>(sharp_mask[(j*bpp) + (i*width*bpp) + 1])) / (max_value[1] - min_value[1])) * 255.0f;
+          scale_value_blue = ((max_value[2] - static_cast<float>(sharp_mask[(j*bpp) + (i*width*bpp) + 2])) / (max_value[2] - min_value[2])) * 255.0f;
+        }
+        else
+        {
+          scale_value_red = ((static_cast<float>(sharp_mask[(j*bpp) + (i*width*bpp) + 0]) - min_value[0]) / (max_value[0] - min_value[0])) * 255.0f;
+          scale_value_green = ((static_cast<float>(sharp_mask[(j*bpp) + (i*width*bpp) + 1]) - min_value[1]) / (max_value[1] - min_value[1])) * 255.0f;
+          scale_value_blue = ((static_cast<float>(sharp_mask[(j*bpp) + (i*width*bpp) + 2]) - min_value[2]) / (max_value[2] - min_value[2])) * 255.0f;
+        }
+
+        result[(j*bpp) + (i*width*bpp) + 0] = static_cast<uint8_t>(std::clamp(scale_value_red, 0.0f, 255.0f));
+        result[(j*bpp) + (i*width*bpp) + 1] = static_cast<uint8_t>(std::clamp(scale_value_green, 0.0f, 255.0f));
+        result[(j*bpp) + (i*width*bpp) + 2] = static_cast<uint8_t>(std::clamp(scale_value_blue, 0.0f, 255.0f));
+        result[(j*bpp) + (i*width*bpp) + 3] = static_cast<uint8_t>(255.0f);
+      }
+    }
+  }
+
 }
 
 void SpatialFilterOp::HighBoostFilter(const std::vector<uint8_t> & source_image, uint32_t width, uint32_t height, int32_t bpp)
