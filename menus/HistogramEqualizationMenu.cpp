@@ -1,6 +1,7 @@
 #include "HistogramEqualizationMenu.h"
 
 #include <limits>
+#include <algorithm>
 
 #include <imgui.h>
 #include <implot/implot.h>
