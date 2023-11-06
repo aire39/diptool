@@ -544,6 +544,14 @@ void RenderTask(sf::RenderWindow & window
         encode_output.write(encode.data(), encode.size());
         encode_output.close();
       }
+      else if (menu.IsOutputBRLE())
+      {
+        std::vector<uint8_t> source_pixels (processed_image.getPixelsPtr(), processed_image.getPixelsPtr()+(processed_image.getSize().x * processed_image.getSize().y * 4));
+        std::string encode = rl_coding.BEncode(source_pixels, processed_image.getSize().x, processed_image.getSize().y, 4);
+        std::ofstream encode_output(menu.FileOutputPath() + ".bencode", std::ofstream::binary);
+        encode_output.write(encode.data(), encode.size());
+        encode_output.close();
+      }
       else
       {
         spdlog::warn("output buffer was empty! no processed image to save!");
