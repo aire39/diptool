@@ -26,6 +26,7 @@
 #include "operations/HistogramEqualizationOp.h"
 #include "menus/SpatialFilterMenu.h"
 #include "operations/SpatialFilterOp.h"
+#include "operations/RunLengthCodec.h"
 
 #define USE_ON_RESIZING true
 
@@ -241,6 +242,8 @@ void RenderTask(sf::RenderWindow & window
 
   SpatialFilterMenu spatial_filter_menu;
   SpatialFilterOp spatial_op;
+
+  RunLengthCodec rl_coding;
 
   Menu menu;
   menu.SetImagePath(image_file_path);
@@ -519,9 +522,27 @@ void RenderTask(sf::RenderWindow & window
 
     if (menu.IsSavingOutput())
     {
-      if (processed_image.saveToFile("output.png"))
+      if (menu.IsOutputPNG())
       {
-        spdlog::info("save processed image");
+        if (processed_image.saveToFile(menu.FileOutputPath() + ".png"))
+        {
+          spdlog::info("save processed image");
+        }
+      }
+      if (menu.IsOutputJPG())
+      {
+        if (processed_image.saveToFile(menu.FileOutputPath() + ".jpg"))
+        {
+          spdlog::info("save processed image");
+        }
+      }
+      else if (menu.IsOutputRLE())
+      {
+        std::vector<uint8_t> source_pixels (processed_image.getPixelsPtr(), processed_image.getPixelsPtr()+(processed_image.getSize().x * processed_image.getSize().y * 4));
+        std::string encode = rl_coding.Encode(source_pixels, processed_image.getSize().x, processed_image.getSize().y, 4);
+        std::ofstream encode_output(menu.FileOutputPath() + ".encode", std::ofstream::binary);
+        encode_output.write(encode.data(), encode.size());
+        encode_output.close();
       }
       else
       {

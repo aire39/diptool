@@ -156,6 +156,8 @@ add_executable(diptool
                operations/HistogramEqualizationOp.h
                operations/SpatialFilterOp.cpp
                operations/SpatialFilterOp.h
+               operations/RunLengthCodec.cpp
+               operations/RunLengthCodec.h
                ${TINYDIALOG}
                ${IMPLOT}
                ${COMMON}
