@@ -1,42 +1,39 @@
 #include "RunLengthCodec.h"
 
 #include <cmath>
-#include <iostream>
+#include <spdlog/spdlog.h>
 
 namespace {
   //https://stackoverflow.com/questions/551579/get-bytes-from-a-stdvectorbool
-  void writeAsBytes(const std::vector<bool> & inBits, std::vector<uint8_t> & outBytes) {
+  void writeAsBytes(const std::vector<bool> &inBits, std::vector<uint8_t> &outBytes)
+  {
     int32_t bitOffset = 0;
     const int maxBitOffset = (int) inBits.size();
 
-    const bool emitMSB = true;
-
     int numBytes = static_cast<int32_t>(inBits.size() / 8);
-    if ((inBits.size() % 8) != 0) {
+    if ((inBits.size() % 8) != 0)
+    {
       numBytes += 1;
     }
 
-    for (int32_t bytei = 0; bytei < numBytes; bytei++) {
+    for (int32_t bytei = 0; bytei < numBytes; bytei++)
+    {
       // Consume next 8 bits
 
       uint8_t byteVal = 0;
 
-      for (int32_t biti = 0; biti < 8; biti++ ) {
-        if (bitOffset >= maxBitOffset) {
+      for (int32_t biti = 0; biti < 8; biti++ )
+      {
+        if (bitOffset >= maxBitOffset)
+        {
           break;
         }
 
         bool bit = inBits[bitOffset++];
 
         // Flush 8 bits to backing array of bytes.
-        // Note that bits can be written as either
-        // LSB first (reversed) or MSB first (not reversed).
 
-        if (emitMSB) {
-          byteVal |= (bit << (7 - biti));
-        } else {
-          byteVal |= (bit << biti);
-        }
+        byteVal |= (bit << (7 - biti));
       }
 
       outBytes.push_back(byteVal);
@@ -157,7 +154,10 @@ std::string RunLengthCodec::Encode(std::vector<uint8_t> image_data, uint32_t wid
 
 std::string RunLengthCodec::BEncode(std::vector<uint8_t> image_data, uint32_t width, uint32_t height, int16_t bpp)
 {
+  bitplaneMap.clear();
   bitplaneCountMap.clear();
+  bitplaneRLECountMap.clear();
+  countMap.clear();
 
   encodeBMap =  static_cast<char>(width & 0xFF);
   encodeBMap += static_cast<char>(width >> 8 & 0xFF);
@@ -190,11 +190,61 @@ std::string RunLengthCodec::BEncode(std::vector<uint8_t> image_data, uint32_t wi
     bitplaneCountMap.push_back(bit_pack_to_bytes);
   }
 
-  for (const auto & bp : bitplaneCountMap)
+  for (const auto & bpm : bitplaneMap)
   {
-    for (const auto & bp_data : bp)
+    auto bpm_start = bpm[0];
+    std::vector<uint32_t> bit_count;
+
+    uint32_t largest_number_of_bits = 0;
+    uint32_t largest_number_counter = 0;
+
+    for (bool i : bpm)
     {
-      encodeBMap += static_cast<char>(bp_data);
+      if (bpm_start != i)
+      {
+        bpm_start = i;
+        bit_count.push_back(largest_number_counter);
+
+        largest_number_of_bits = (largest_number_counter > largest_number_of_bits) ? largest_number_counter : largest_number_of_bits;
+        largest_number_counter = 0;
+      }
+
+      largest_number_counter++;
+    }
+
+    largest_number_of_bits = (largest_number_counter > largest_number_of_bits) ? largest_number_counter : largest_number_of_bits;
+    bit_count.push_back(largest_number_counter);
+
+    uint32_t largest_n_bits_plane = std::ceil(std::log2(largest_number_of_bits));
+    uint8_t largest_n_bytes_plane = static_cast<uint8_t>(std::ceil(static_cast<float>(largest_n_bits_plane) / 8.0f)) << 4;
+
+    auto rle_info = static_cast<uint8_t>(bpm[0]);
+    rle_info |= largest_n_bytes_plane;
+
+    bitplaneRLECountMap.emplace_back(rle_info, bit_count);
+  }
+
+  for (const auto & [start_value, bprle] : bitplaneRLECountMap)
+  {
+    // add the start byte of the plane and extract the largest number of bytes needed to represent
+    // each bit pass (n_bytes_to_add)
+
+    encodeBMap += static_cast<char>(start_value);
+    uint32_t n_bytes_to_add = (0xF0 & start_value) >> 4;
+
+    spdlog::info("start value index: {} ({:x})", encodeBMap.size()-1, encodeBMap.size()-1);
+
+    // this will add the minimal amount of bytes needed to represent the number of
+    // running bits for each 1 and 0 of the bit-plane. The number of bytes needed
+    // is represented at the start of a plane in the upper 4 bits while the start
+    // bit is in the lower 4-bits
+
+    for (const uint32_t & v : bprle)
+    {
+      for(int i=0; i<n_bytes_to_add; i++)
+      {
+        encodeBMap += static_cast<char>(v >> (i*8) & 0xFF);
+      }
     }
   }
 
@@ -242,7 +292,7 @@ std::vector<uint8_t> RunLengthCodec::BDecode(const std::vector<uint8_t> & image_
 
   const uint8_t n_bit_planes = std::ceil(std::log2(std::pow(2, 8 * sizeof(uint8_t))));
   const size_t image_data_size = width * height * 4;
-  const size_t image_pixel_size = width * height;
+  const uint32_t image_pixel_size = width * height;
 
   const uint8_t * data_position = (image_data.data() + 8);
 
@@ -252,30 +302,47 @@ std::vector<uint8_t> RunLengthCodec::BDecode(const std::vector<uint8_t> & image_
 
   for (size_t m=0; m<n_bit_planes; m++)
   {
-    for (size_t i=0; i<image_pixel_size; i++)
+    bool start_bit = (data_position[0] & 0x0F) == 1;
+    uint8_t max_bytes = (data_position[0] & 0xF0) >> 4;
+
+    uint32_t bit_mask_shift = (sizeof(uint32_t) - max_bytes) * 8;
+    uint32_t bit_mask = 0xFFFFFFFF << bit_mask_shift;
+
+    uint32_t bit_count = 0;
+
+    data_position++;
+
+    uint32_t cc = 0;
+    while (bit_count < image_pixel_size)
     {
-      // iterate through the encoded bits per plane ,so we set where the data is for each bit plane starts.
-      // make sure the index that we want matches up with the bits in the byte as each bit in a byte represents
-      // a bit in a pixel. The ANDing of the data value and bit_index should let us know if a bit exist for the pixel
-      // for the current iterated bit-plane.
-      // If a bit exists then we should OR against the pixel value to add the bit otherwise it will just remain 0 since
-      // the image data is initialized to 0 anyway.
+      uint32_t add_n_bits = ((*reinterpret_cast<const uint32_t*>(&data_position[0])) & (bit_mask >> bit_mask_shift));
 
-      auto data_pos_index_start = static_cast<size_t>(m * (size_t)std::ceil((double)image_pixel_size / 8.0));
-      auto data_pos_index = (i / 8);
-      uint8_t bit_index = 0x80 >> (i % 8);
-      uint8_t data_value = data_position[data_pos_index_start + data_pos_index];
+      // If there start bit is 1 then that plane bit will be added to every pixel. No need to "add" 0's since the image
+      // data is already initialized with all bits set to 0. so entry of 0's are skipped but note by how much is needed
+      // to be skipped as this still needs to added to the bit_count.
 
-      bool add_bit = (data_value & bit_index) > 0;
-
-      if (add_bit)
+      if (start_bit)
       {
-        image[(i * 4) + 0] |= (0x80 >> m);
-        image[(i * 4) + 1] |= (0x80 >> m);
-        image[(i * 4) + 2] |= (0x80 >> m);
+        for (size_t i=bit_count; i<(bit_count + add_n_bits); i++)
+        {
+          image[(i * 4) + 0] |= (0x80 >> m);
+          image[(i * 4) + 1] |= (0x80 >> m);
+          image[(i * 4) + 2] |= (0x80 >> m);
+          image[(i * 4) + 3]  = 255;
+        }
+      }
+      else
+      {
+        for (size_t i=bit_count; i<(bit_count + add_n_bits); i++)
+        {
+          image[(i * 4) + 3]  = 255;
+        }
       }
 
-      image[(i * 4) + 3]  = 255;
+      start_bit ^= true;
+      data_position += max_bytes;
+      bit_count += add_n_bits;
+      cc++;
     }
   }
 

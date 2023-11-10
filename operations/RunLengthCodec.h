@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <map>
 #include <vector>
+#include <utility>
 
 class RunLengthCodec
 {
@@ -24,4 +25,6 @@ class RunLengthCodec
     std::vector<std::vector<uint8_t>> countMap;
     std::vector<std::vector<bool>> bitplaneMap;
     std::vector<std::vector<uint8_t>> bitplaneCountMap;
+
+  std::vector<std::pair<uint8_t, std::vector<uint32_t>>> bitplaneRLECountMap;
 };
