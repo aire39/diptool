@@ -41,53 +41,6 @@ namespace {
   }
 }
 
-std::string RunLengthCodec::AsciiEncode(std::vector<uint8_t> image_data, uint32_t width, uint32_t height, int16_t bpp)
-{
-  uint16_t current_value = 0;
-  for (size_t i=0; i<(bpp-1); i++)
-  {
-    current_value += image_data[i];
-  }
-
-  current_value /= bpp;
-
-  uint32_t total_pixel_count = 0;
-  uint16_t value_count = 0;
-  for (size_t i=0; i<image_data.size(); i+=bpp)
-  {
-    total_pixel_count++;
-    uint16_t value = 0;
-    for (size_t k=0; k<(bpp-1); k++)
-    {
-      value += image_data[i + k];
-    }
-
-    value /= (bpp-1);
-
-    if (value != current_value)
-    {
-      value_count = value_count == 0 ? 1 : value_count;
-
-      std::string value_encode;
-      value_encode += std::to_string(value);
-      value_encode += "!";
-      value_encode += std::to_string(value_count);
-      value_encode += " ";
-
-      asciiEncodeMap += value_encode;
-      current_value = value;
-
-      value_count = 0;
-    }
-    else
-    {
-      value_count++;
-    }
-  }
-
-  return asciiEncodeMap;
-}
-
 std::string RunLengthCodec::Encode(std::vector<uint8_t> image_data, uint32_t width, uint32_t height, int16_t bpp)
 {
   countMap.clear();
