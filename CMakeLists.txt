@@ -158,6 +158,8 @@ add_executable(diptool
                operations/SpatialFilterOp.h
                operations/RunLengthCodec.cpp
                operations/RunLengthCodec.h
+               operations/VariableLengthCodec.cpp
+               operations/VariableLengthCodec.h
                ${TINYDIALOG}
                ${IMPLOT}
                ${COMMON}

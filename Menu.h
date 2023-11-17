@@ -22,6 +22,7 @@ class Menu {
     [[nodiscard]] bool IsOutputJPG() const;
     [[nodiscard]] bool IsOutputRLE() const;
     [[nodiscard]] bool IsOutputBRLE() const;
+    [[nodiscard]] bool IsOutputVLE() const;
     [[nodiscard]] std::string FileOutputPath();
     bool IsSavingOutput();
 

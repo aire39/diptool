@@ -27,6 +27,7 @@
 #include "menus/SpatialFilterMenu.h"
 #include "operations/SpatialFilterOp.h"
 #include "operations/RunLengthCodec.h"
+#include "operations/VariableLengthCodec.h"
 
 #define USE_ON_RESIZING true
 
@@ -244,6 +245,7 @@ void RenderTask(sf::RenderWindow & window
   SpatialFilterOp spatial_op;
 
   RunLengthCodec rl_coding;
+  VariableLengthCodec vl_codec;
 
   Menu menu;
   menu.SetImagePath(image_file_path);
@@ -551,6 +553,22 @@ void RenderTask(sf::RenderWindow & window
         std::ofstream encode_output(menu.FileOutputPath() + ".bencode", std::ofstream::binary);
         encode_output.write(encode.data(), encode.size());
         encode_output.close();
+      }
+      else if (menu.IsOutputVLE())
+      {
+        std::vector<uint8_t> source_pixels (processed_image.getPixelsPtr(), processed_image.getPixelsPtr()+(processed_image.getSize().x * processed_image.getSize().y * 4));
+        std::string encode = vl_codec.Encode(source_pixels, processed_image.getSize().x, processed_image.getSize().y, 4);
+
+        if (!encode.empty())
+        {
+          std::ofstream encode_output(menu.FileOutputPath() + ".vencode", std::ofstream::binary);
+          encode_output.write(encode.data(), encode.size());
+          encode_output.close();
+        }
+        else
+        {
+          spdlog::warn("unable to save image! Either no image data to process or bug in the encode process!");
+        }
       }
       else
       {

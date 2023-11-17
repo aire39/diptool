@@ -11,6 +11,7 @@
 #include <tinyfiledialogs/tinyfiledialogs.h>
 
 #include "operations/RunLengthCodec.h"
+#include "operations/VariableLengthCodec.h"
 
 namespace {
   bool ButtonCenteredOnLine(const char* label)
@@ -42,10 +43,10 @@ void Menu::RenderMenu(sf::Image & image, sf::Texture & texture, sf::Sprite & spr
   ImGui::SeparatorText("source");
   if(ImGui::Button("Load Image"))
   {
-    char const * file_filter[4] = {"*.png","*.jpg", "*.encode", "*.bencode"};
+    char const * file_filter[5] = {"*.png","*.jpg", "*.encode", "*.bencode", "*.vencode"};
     auto selected_file = tinyfd_openFileDialog("Load Image"
         ,nullptr
-        ,4
+        ,5
         ,file_filter
         ,"image files"
         ,0
@@ -103,6 +104,32 @@ void Menu::RenderMenu(sf::Image & image, sf::Texture & texture, sf::Sprite & spr
           uint32_t height = *reinterpret_cast<uint32_t*>(&data[4]);
 
           auto image_data = RunLengthCodec::BDecode(data);
+          image.create(width, height, &image_data[0]);
+          texture.loadFromImage(image);
+          sprite.setTexture(texture, true);
+          sprite.setPosition(8, 8);
+        }
+        else
+        {
+          spdlog::warn("Unable to load image {} because no data", imageFilePath);
+        }
+      }
+      else if (image_file_ext == "vencode")
+      {
+        std::filesystem::path file_path(selected_file);
+        size_t file_size = std::filesystem::file_size(file_path);
+
+        if (file_size)
+        {
+          std::vector<uint8_t> data(file_size);
+          std::ifstream file_encode(selected_file, std::ifstream::binary);
+          file_encode.read(reinterpret_cast<char*>(data.data()), static_cast<std::streamsize>(file_size));
+          file_encode.close();
+
+          uint32_t width = *reinterpret_cast<uint32_t*>(&data[0]);
+          uint32_t height = *reinterpret_cast<uint32_t*>(&data[4]);
+
+          auto image_data = VariableLengthCodec::Decode(data);
           image.create(width, height, &image_data[0]);
           texture.loadFromImage(image);
           sprite.setTexture(texture, true);
@@ -181,6 +208,13 @@ void Menu::RenderMenu(sf::Image & image, sf::Texture & texture, sf::Sprite & spr
     fileType = 3;
   }
 
+  ImGui::SameLine();
+
+  if (ImGui::RadioButton("vle", (fileType == 4)))
+  {
+    fileType = 4;
+  }
+
   ImGui::NewLine();
 
   if (IsOutputRLE() || IsOutputBRLE())
@@ -245,6 +279,11 @@ bool Menu::IsOutputRLE() const
 bool Menu::IsOutputBRLE() const
 {
   return (fileType == 3);
+}
+
+bool Menu::IsOutputVLE() const
+{
+  return (fileType == 4);
 }
 
 std::string Menu::FileOutputPath()
