@@ -160,6 +160,8 @@ add_executable(diptool
                operations/RunLengthCodec.h
                operations/VariableLengthCodec.cpp
                operations/VariableLengthCodec.h
+               imageops/colormodel.cpp
+               imageops/colormodel.h
                ${TINYDIALOG}
                ${IMPLOT}
                ${COMMON}
