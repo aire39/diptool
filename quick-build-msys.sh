@@ -7,6 +7,6 @@ mkdir build-msys
 fi
 
 pushd build-msys
-cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release ..
+cmake -G "Unix Makefiles" -DCMAKE_POLICY_VERSION_MINIMUM=3.11 -DCMAKE_BUILD_TYPE=Release ..
 cmake --build .
 popd
